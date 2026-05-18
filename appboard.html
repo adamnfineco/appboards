@@ -1,0 +1,1162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AppBoard — [Project Name]</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+
+/* ══════════════════════════════════════════════
+   RESET
+   ══════════════════════════════════════════════ */
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+/* ══════════════════════════════════════════════
+   DESIGN TOKENS
+   ══════════════════════════════════════════════ */
+:root {
+  /* Colors */
+  --bg:             #fafafa;
+  --surface:        #ffffff;
+  --text-primary:   #18181b;
+  --text-secondary: #71717a;
+  --text-tertiary:  #a1a1aa;
+  --border:         #e4e4e7;
+  --border-subtle:  #f4f4f5;
+  --accent:         #059669;
+  --accent-soft:    #ecfdf5;
+  --accent-text:    #047857;
+
+  /* Shell */
+  --sidebar-bg:     #ffffff;
+  --sidebar-w:      240px;
+  --phone-w:        390px;
+  --phone-h:        844px;
+
+  /* Radii */
+  --radius-sm:      8px;
+  --radius-md:      14px;
+  --radius-lg:      20px;
+  --radius-xl:      28px;
+
+  /* Transitions */
+  --transition-fast: 180ms cubic-bezier(0.16, 1, 0.3, 1);
+  --transition-med:  320ms cubic-bezier(0.16, 1, 0.3, 1);
+
+  /* Layout */
+  --tab-bar-h: 80px;
+}
+
+/* ══════════════════════════════════════════════
+   DESKTOP SHELL
+   ══════════════════════════════════════════════ */
+html {
+  font-family: 'Outfit', system-ui, sans-serif;
+  background: #f0f0f0;
+  color: var(--text-primary);
+  -webkit-font-smoothing: antialiased;
+  height: 100%;
+}
+body { height: 100%; overflow: hidden; }
+
+.desktop-shell {
+  display: flex;
+  height: 100%;
+}
+
+/* ── Sidebar ── */
+.sidebar {
+  width: var(--sidebar-w);
+  background: var(--sidebar-bg);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  padding: 24px 0;
+  overflow-y: auto;
+}
+.sidebar-logo {
+  padding: 0 20px 24px;
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  color: var(--text-primary);
+}
+.sidebar-section {
+  padding: 0 12px;
+  margin-bottom: 8px;
+}
+.sidebar-section-label {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--text-tertiary);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  padding: 0 8px 8px;
+}
+.sidebar-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  transition: all var(--transition-fast);
+  -webkit-user-select: none;
+}
+.sidebar-item:hover { background: var(--border-subtle); color: var(--text-primary); }
+.sidebar-item.active { background: var(--text-primary); color: white; }
+.sidebar-item-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+/* ── Phone Stage + Frame ── */
+.phone-stage {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+.phone-frame {
+  width: var(--phone-w);
+  height: var(--phone-h);
+  background: var(--bg);
+  border-radius: 44px;
+  box-shadow:
+    0 0 0 10px #1d1d1f,
+    0 20px 60px rgba(0,0,0,0.2),
+    0 0 0 11px rgba(255,255,255,0.1);
+  overflow: hidden;
+  position: relative;
+}
+
+/* ── Variant container ── */
+/* Each screen prototype lives in a .variant div. Only one is visible at a time. */
+.variant {
+  display: none;
+  width: 100%;
+  height: 100%;
+  position: relative;
+}
+.variant.active { display: block; }
+
+
+/* ══════════════════════════════════════════════
+   SHARED MOBILE COMPONENTS
+   ══════════════════════════════════════════════
+   These are the building blocks. Use them in any
+   variant. Add variant-specific styles below.
+   ══════════════════════════════════════════════ */
+
+/* ── Pages & Subpages ── */
+/* .m-page — a top-level tab content area. Fade + slide in. */
+.m-page {
+  position: absolute;
+  inset: 0;
+  bottom: var(--tab-bar-h);
+  overflow-y: auto;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(6px);
+  transition: opacity var(--transition-med), transform var(--transition-med);
+  background: var(--bg);
+}
+.m-page.active { opacity: 1; pointer-events: auto; transform: translateY(0); }
+
+/* .m-subpage — a drill-in detail page. Slides in from right. */
+.m-subpage {
+  position: absolute;
+  inset: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+  background: var(--bg);
+  z-index: 100;
+  opacity: 0;
+  pointer-events: none;
+  transform: translateX(30px);
+  transition: opacity var(--transition-med), transform var(--transition-med);
+}
+.m-subpage.active { opacity: 1; pointer-events: auto; transform: translateX(0); }
+
+/* ── Tab Bar ── */
+.m-tab-bar {
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  height: var(--tab-bar-h);
+  background: rgba(255,255,255,0.92);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border-top: 1px solid var(--border-subtle);
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-around;
+  padding-top: 10px;
+  z-index: 200;
+}
+.m-tab {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px 14px;
+  -webkit-tap-highlight-color: transparent;
+}
+.m-tab svg { width: 22px; height: 22px; stroke: var(--text-tertiary); stroke-width: 1.8; fill: none; transition: stroke var(--transition-fast); }
+.m-tab span { font-size: 10px; font-weight: 500; color: var(--text-tertiary); transition: color var(--transition-fast); }
+.m-tab.active svg { stroke: var(--text-primary); }
+.m-tab.active span { color: var(--text-primary); }
+
+/* ── FAB (Floating Action Button) ── */
+.m-fab {
+  position: absolute;
+  bottom: calc(var(--tab-bar-h) + 12px);
+  right: 16px;
+  width: 48px; height: 48px;
+  border-radius: 50%;
+  background: var(--text-primary);
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+  z-index: 150;
+  transition: transform var(--transition-fast);
+}
+.m-fab:active { transform: scale(0.92); }
+.m-fab svg { width: 20px; height: 20px; stroke: white; stroke-width: 2.2; fill: none; }
+
+/* ── Headers ── */
+.m-header {
+  padding: 52px 18px 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.m-header h1 { font-size: 26px; font-weight: 700; letter-spacing: -0.03em; line-height: 1; }
+
+.m-avatar {
+  width: 30px; height: 30px; border-radius: 50%;
+  background: linear-gradient(135deg, #d4d4d8, #a1a1aa);
+  display: flex; align-items: center; justify-content: center;
+}
+.m-avatar span { font-size: 12px; font-weight: 600; color: white; }
+
+.m-back-header {
+  padding: 52px 18px 10px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.m-back-btn {
+  background: none; border: none; cursor: pointer;
+  padding: 4px; margin-left: -4px;
+  display: flex; align-items: center;
+}
+.m-back-btn svg { width: 20px; height: 20px; stroke: var(--text-primary); stroke-width: 2; fill: none; }
+.m-back-header h2 { font-size: 18px; font-weight: 600; letter-spacing: -0.02em; }
+
+/* ── Section Headers ── */
+.m-section-header {
+  padding: 22px 18px 10px;
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+}
+.m-section-header h3 { font-size: 16px; font-weight: 600; letter-spacing: -0.01em; }
+.m-section-link { font-size: 12px; font-weight: 500; color: var(--accent-text); background: none; border: none; cursor: pointer; }
+
+.m-label {
+  padding: 24px 18px 8px;
+  font-size: 11px; font-weight: 600;
+  color: var(--text-tertiary);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+/* ── Chips ── */
+.m-chips {
+  display: flex; gap: 7px;
+  overflow-x: auto; padding: 0 18px 10px;
+  -ms-overflow-style: none; scrollbar-width: none;
+}
+.m-chips::-webkit-scrollbar { display: none; }
+.m-chip {
+  flex-shrink: 0;
+  padding: 5px 12px; border-radius: 18px;
+  font-size: 12px; font-weight: 500;
+  background: var(--surface);
+  color: var(--text-secondary);
+  border: 1px solid var(--border);
+  cursor: pointer; white-space: nowrap;
+  transition: all var(--transition-fast);
+}
+.m-chip.active { background: var(--text-primary); color: white; border-color: var(--text-primary); }
+
+/* ── Horizontal Scroll ── */
+.m-h-scroll {
+  display: flex; gap: 10px;
+  overflow-x: auto; padding: 0 18px 4px;
+  scroll-snap-type: x proximity;
+  -ms-overflow-style: none; scrollbar-width: none;
+}
+.m-h-scroll::-webkit-scrollbar { display: none; }
+
+/* ── Divider ── */
+.m-divider { height: 1px; background: var(--border-subtle); margin: 0 18px; }
+
+/* ── Source label ── */
+.m-source { font-size: 10px; color: var(--text-tertiary); }
+
+/* ── Intent Badges ── */
+/* 14 intent types, each with distinct color. */
+.m-intent {
+  display: inline-flex; padding: 2px 7px; border-radius: 5px;
+  font-size: 10px; font-weight: 600; letter-spacing: 0.02em; text-transform: lowercase;
+}
+.m-intent[data-i="buy"]     { background: #fef3c7; color: #92400e; }
+.m-intent[data-i="cook"]    { background: #fee2e2; color: #991b1b; }
+.m-intent[data-i="go"]      { background: #dbeafe; color: #1e40af; }
+.m-intent[data-i="create"]  { background: #ede9fe; color: #5b21b6; }
+.m-intent[data-i="eat"]     { background: #ffedd5; color: #9a3412; }
+.m-intent[data-i="read"]    { background: #e0e7ff; color: #3730a3; }
+.m-intent[data-i="watch"]   { background: #fce7f3; color: #9d174d; }
+.m-intent[data-i="listen"]  { background: #ccfbf1; color: #115e59; }
+.m-intent[data-i="do"]      { background: #d1fae5; color: #065f46; }
+.m-intent[data-i="learn"]   { background: #e0f2fe; color: #075985; }
+.m-intent[data-i="hire"]    { background: #f1f5f9; color: #334155; }
+.m-intent[data-i="book"]    { background: #f3e8ff; color: #6b21a8; }
+.m-intent[data-i="gift"]    { background: #ffe4e6; color: #9f1239; }
+.m-intent[data-i="inspire"] { background: #fae8ff; color: #86198f; }
+
+/* ── Item Row ── */
+/* Standard list item: 64px thumbnail + title + meta. */
+.m-item-row {
+  display: flex; gap: 12px;
+  padding: 12px 18px;
+  cursor: pointer;
+  transition: background var(--transition-fast);
+}
+.m-item-row:active { background: var(--border-subtle); }
+.m-item-img {
+  width: 64px; height: 64px; border-radius: 6px;
+  background: var(--border-subtle); overflow: hidden; flex-shrink: 0;
+}
+.m-item-img img { width: 100%; height: 100%; object-fit: cover; }
+.m-item-body {
+  flex: 1; min-width: 0;
+  display: flex; flex-direction: column;
+  justify-content: center; gap: 4px;
+}
+.m-item-body h4 {
+  font-size: 13px; font-weight: 600;
+  letter-spacing: -0.01em; line-height: 1.3;
+  display: -webkit-box; -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical; overflow: hidden;
+}
+.m-item-meta { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+
+/* ── Category Row ── */
+/* List row with 50px square thumbnail, title, count, and chevron. */
+.m-cat-row {
+  display: flex; align-items: center; gap: 12px;
+  padding: 12px 18px;
+  cursor: pointer;
+  transition: background var(--transition-fast);
+}
+.m-cat-row:active { background: var(--border-subtle); }
+.m-cat-thumb {
+  width: 50px; height: 50px; border-radius: var(--radius-sm);
+  background: var(--border-subtle); overflow: hidden; flex-shrink: 0;
+}
+.m-cat-thumb img { width: 100%; height: 100%; object-fit: cover; }
+.m-cat-info { flex: 1; min-width: 0; }
+.m-cat-info h4 { font-size: 14px; font-weight: 600; letter-spacing: -0.01em; margin-bottom: 1px; }
+.m-cat-info p { font-size: 12px; color: var(--text-secondary); }
+.m-cat-arrow { width: 16px; height: 16px; stroke: var(--text-tertiary); stroke-width: 2; fill: none; }
+
+/* ── Collection Card ── */
+/* Horizontally scrolling card: colored dot + name + count. */
+.m-col-card {
+  flex: 0 0 136px; scroll-snap-align: start;
+  background: var(--surface); border-radius: var(--radius-md);
+  padding: 14px; border: 1px solid var(--border-subtle);
+  cursor: pointer; transition: transform var(--transition-fast);
+}
+.m-col-card:active { transform: scale(0.96); }
+.m-col-dot { width: 7px; height: 7px; border-radius: 50%; margin-bottom: 10px; }
+.m-col-card h4 { font-size: 13px; font-weight: 600; letter-spacing: -0.01em; margin-bottom: 3px; line-height: 1.2; }
+.m-col-card p { font-size: 11px; color: var(--text-tertiary); }
+
+/* ── Stagger Animation ── */
+/* Add class="stagger" to a container to fade-up children in sequence. */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.stagger > * { opacity: 0; animation: fadeUp 350ms cubic-bezier(0.16,1,0.3,1) forwards; }
+.stagger > *:nth-child(1) { animation-delay:   0ms; }
+.stagger > *:nth-child(2) { animation-delay:  50ms; }
+.stagger > *:nth-child(3) { animation-delay: 100ms; }
+.stagger > *:nth-child(4) { animation-delay: 150ms; }
+.stagger > *:nth-child(5) { animation-delay: 200ms; }
+.stagger > *:nth-child(6) { animation-delay: 250ms; }
+.stagger > *:nth-child(7) { animation-delay: 300ms; }
+.stagger > *:nth-child(8) { animation-delay: 350ms; }
+
+
+/* ══════════════════════════════════════════════
+   DETAIL PAGES (shared by all variants)
+   ══════════════════════════════════════════════ */
+
+/* Item detail — hero image at top with back button overlaid */
+.detail-hero { width: 100%; height: 200px; background: var(--border-subtle); overflow: hidden; position: relative; }
+.detail-hero img { width: 100%; height: 100%; object-fit: cover; }
+.detail-hero-back {
+  position: absolute; top: 48px; left: 14px;
+  width: 32px; height: 32px; border-radius: 50%;
+  background: rgba(255,255,255,0.85); backdrop-filter: blur(8px);
+  border: none; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  z-index: 10; transition: transform var(--transition-fast);
+}
+.detail-hero-back:active { transform: scale(0.9); }
+.detail-hero-back svg { width: 18px; height: 18px; stroke: var(--text-primary); stroke-width: 2; fill: none; }
+
+.detail-body { padding: 16px 18px 40px; }
+.detail-title { font-size: 20px; font-weight: 700; letter-spacing: -0.02em; line-height: 1.2; margin-bottom: 10px; }
+.detail-meta-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 14px; }
+.detail-cta {
+  display: inline-flex; align-items: center; gap: 7px;
+  padding: 10px 20px; border-radius: 10px;
+  background: var(--text-primary); color: white;
+  border: none; cursor: pointer; font-family: inherit;
+  font-size: 14px; font-weight: 600; letter-spacing: -0.01em;
+  transition: transform var(--transition-fast); margin-bottom: 18px;
+}
+.detail-cta:active { transform: scale(0.96); }
+.detail-cta svg { width: 16px; height: 16px; stroke: currentColor; stroke-width: 2; fill: none; }
+.detail-comment {
+  padding: 12px 14px; background: var(--border-subtle); border-radius: var(--radius-sm);
+  margin-bottom: 18px; font-size: 13px; color: var(--text-secondary); line-height: 1.4; font-style: italic;
+}
+.detail-comment .mention { color: var(--accent-text); font-weight: 600; font-style: normal; cursor: pointer; }
+.detail-section-label { font-size: 10px; font-weight: 600; color: var(--text-tertiary); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 8px; }
+.detail-meta-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 18px; }
+.detail-meta-cell { padding: 10px 12px; background: var(--surface); border: 1px solid var(--border-subtle); border-radius: var(--radius-sm); }
+.detail-meta-cell dt { font-size: 10px; font-weight: 600; color: var(--text-tertiary); text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 2px; }
+.detail-meta-cell dd { font-size: 13px; font-weight: 500; color: var(--text-primary); }
+.detail-collections { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 18px; }
+.detail-col-tag {
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 5px 10px; border-radius: 14px;
+  background: var(--surface); border: 1px solid var(--border);
+  font-size: 11px; font-weight: 600; color: var(--text-secondary);
+  cursor: pointer; transition: all var(--transition-fast);
+}
+.detail-col-tag:active { transform: scale(0.95); }
+.detail-col-tag .dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+
+/* Category / Collection list detail header */
+.list-detail-header { padding: 52px 18px 8px; display: flex; align-items: center; gap: 8px; }
+.list-detail-header .m-back-btn { background: none; border: none; cursor: pointer; padding: 4px; margin-left: -4px; display: flex; align-items: center; }
+.list-detail-header .m-back-btn svg { width: 20px; height: 20px; stroke: var(--text-primary); stroke-width: 2; fill: none; }
+.list-detail-title { flex: 1; }
+.list-detail-title h2 { font-size: 20px; font-weight: 700; letter-spacing: -0.02em; line-height: 1; }
+.list-detail-title p { font-size: 12px; color: var(--text-secondary); margin-top: 3px; }
+.list-detail-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+
+
+/* ══════════════════════════════════════════════
+   ADD MODAL (bottom sheet)
+   ══════════════════════════════════════════════ */
+.add-overlay {
+  position: absolute; inset: 0;
+  background: rgba(0,0,0,0.35); z-index: 300;
+  opacity: 0; pointer-events: none;
+  transition: opacity var(--transition-med);
+}
+.add-overlay.active { opacity: 1; pointer-events: auto; }
+.add-sheet {
+  position: absolute; bottom: 0; left: 0; right: 0; z-index: 310;
+  background: var(--surface);
+  border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+  padding: 16px 18px 32px;
+  transform: translateY(100%);
+  transition: transform var(--transition-med);
+}
+.add-overlay.active .add-sheet { transform: translateY(0); }
+.add-handle { width: 32px; height: 4px; border-radius: 2px; background: var(--border); margin: 0 auto 16px; }
+.add-sheet h3 { font-size: 17px; font-weight: 700; letter-spacing: -0.02em; margin-bottom: 16px; }
+.add-field { margin-bottom: 14px; }
+.add-field label { display: block; font-size: 11px; font-weight: 600; color: var(--text-tertiary); text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 5px; }
+.add-field input,
+.add-field textarea { width: 100%; padding: 10px 12px; border: 1px solid var(--border); border-radius: var(--radius-sm); font-family: inherit; font-size: 13px; color: var(--text-primary); background: var(--bg); outline: none; transition: border-color var(--transition-fast); resize: none; }
+.add-field input:focus,
+.add-field textarea:focus { border-color: var(--accent); }
+.add-submit { width: 100%; padding: 12px; border-radius: 10px; background: var(--text-primary); color: white; border: none; cursor: pointer; font-family: inherit; font-size: 14px; font-weight: 600; transition: transform var(--transition-fast); }
+.add-submit:active { transform: scale(0.97); }
+
+
+/* ══════════════════════════════════════════════
+   SIDEBAR ABOUT PANEL
+   ══════════════════════════════════════════════ */
+.sidebar-about { margin-top: auto; padding-top: 16px; border-top: 1px solid var(--border-subtle); }
+
+
+/* ══════════════════════════════════════════════
+   VARIANT-SPECIFIC STYLES — ADD YOURS BELOW
+   ══════════════════════════════════════════════
+   Convention: prefix with variant ID, e.g. .v1-hero, .v1-card
+   ══════════════════════════════════════════════ */
+
+/* Example variant (v1) */
+.v1-hero {
+  margin: 0 18px;
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  position: relative;
+  cursor: pointer;
+  transition: transform var(--transition-fast);
+}
+.v1-hero:active { transform: scale(0.98); }
+.v1-hero img { width: 100%; height: 180px; object-fit: cover; display: block; }
+.v1-hero-ov {
+  position: absolute; inset: 0;
+  background: linear-gradient(to top, rgba(24,24,27,0.85) 0%, rgba(24,24,27,0.25) 50%, transparent 100%);
+}
+.v1-hero-content { position: absolute; bottom: 0; left: 0; right: 0; padding: 16px 18px; }
+.v1-hero-tag { font-size: 11px; font-weight: 600; color: #6ee7b7; margin-bottom: 5px; }
+.v1-hero-content h4 { font-size: 17px; font-weight: 700; color: white; letter-spacing: -0.02em; line-height: 1.2; margin-bottom: 5px; }
+
+</style>
+</head>
+
+<body>
+<div class="desktop-shell">
+
+  <!-- ═══════ SIDEBAR ═══════ -->
+  <div class="sidebar">
+    <div class="sidebar-logo">[Project]</div>
+
+    <div class="sidebar-section">
+      <div class="sidebar-section-label">Screens</div>
+
+      <!-- Add a sidebar-item per screen. Match the onclick id to the variant id below. -->
+      <div class="sidebar-item active" onclick="switchVariant('v1', this)">
+        <div class="sidebar-item-dot" style="background: var(--accent)"></div>
+        Screen 1 — Example
+      </div>
+      <!-- <div class="sidebar-item" onclick="switchVariant('v2', this)">
+        <div class="sidebar-item-dot" style="background: #3b82f6"></div>
+        Screen 2 — Name
+      </div> -->
+    </div>
+
+    <!-- About panel — shows description for the active screen -->
+    <div class="sidebar-section sidebar-about">
+      <div class="sidebar-about-v1">
+        <div class="sidebar-section-label">About this screen</div>
+        <div style="padding:0 8px; font-size:11px; color:var(--text-secondary); line-height:1.5;">
+          Replace this with a one-paragraph description of what this screen is exploring and why.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════ PHONE STAGE ═══════ -->
+  <div class="phone-stage">
+    <div class="phone-frame">
+
+      <!-- ══════════════════════════
+           SCREEN v1 — EXAMPLE
+           ══════════════════════════
+           This is a reference implementation demonstrating
+           how shared components compose together.
+           Delete it and build your own screens.
+           ══════════════════════════ -->
+      <div class="variant active" id="variant-v1">
+
+        <!-- HOME TAB -->
+        <div class="m-page active" id="v1-home">
+
+          <!-- Header with avatar -->
+          <div class="m-header">
+            <h1>Home</h1>
+            <div class="m-avatar"><span>M</span></div>
+          </div>
+
+          <!-- Hero card with overlay -->
+          <div class="m-label">Coming up</div>
+          <div class="v1-hero" onclick="openItemDetail('v1','brooklyn-flea')">
+            <img src="https://picsum.photos/seed/bkmarket/780/360" alt="">
+            <div class="v1-hero-ov"></div>
+            <div class="v1-hero-content">
+              <div class="v1-hero-tag">This Saturday</div>
+              <h4>Brooklyn Flea & Smorgasburg</h4>
+              <div class="m-item-meta">
+                <span class="m-intent" data-i="go">go</span>
+                <span class="m-source" style="color:rgba(255,255,255,0.5)">brooklynflea.com</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Section with horizontal-scrolling collection cards -->
+          <div class="m-section-header">
+            <h3>Collections</h3>
+            <button class="m-section-link">See all</button>
+          </div>
+          <div class="m-h-scroll stagger">
+            <div class="m-col-card" onclick="openCollectionDetail('v1','van-build')">
+              <div class="m-col-dot" style="background:#3b82f6"></div>
+              <h4>Van Build</h4><p>47 saves</p>
+            </div>
+            <div class="m-col-card" onclick="openCollectionDetail('v1','italy-trip')">
+              <div class="m-col-dot" style="background:#f59e0b"></div>
+              <h4>Italy Trip</h4><p>23 saves</p>
+            </div>
+            <div class="m-col-card">
+              <div class="m-col-dot" style="background:#10b981"></div>
+              <h4>The House</h4><p>89 saves</p>
+            </div>
+          </div>
+
+          <!-- Filter chips -->
+          <div class="m-section-header"><h3>Recent saves</h3></div>
+          <div class="m-chips">
+            <span class="m-chip active" onclick="toggleChip(this)">All</span>
+            <span class="m-chip" onclick="toggleChip(this)">buy</span>
+            <span class="m-chip" onclick="toggleChip(this)">cook</span>
+            <span class="m-chip" onclick="toggleChip(this)">go</span>
+            <span class="m-chip" onclick="toggleChip(this)">learn</span>
+          </div>
+
+          <!-- Item rows -->
+          <div class="m-item-row" onclick="openItemDetail('v1','renogy')">
+            <div class="m-item-img"><img src="https://picsum.photos/seed/solarpanel7/128/128" alt=""></div>
+            <div class="m-item-body">
+              <h4>Renogy 200W Solar Kit</h4>
+              <div class="m-item-meta">
+                <span class="m-intent" data-i="buy">buy</span>
+                <span class="m-source">renogy.com</span>
+              </div>
+            </div>
+          </div>
+          <div class="m-divider"></div>
+
+          <div class="m-item-row" onclick="openItemDetail('v1','white-bean')">
+            <div class="m-item-img"><img src="https://picsum.photos/seed/vegstew/128/128" alt=""></div>
+            <div class="m-item-body">
+              <h4>White Bean & Roasted Garlic Stew</h4>
+              <div class="m-item-meta">
+                <span class="m-intent" data-i="cook">cook</span>
+                <span class="m-source">minimalistbaker.com</span>
+              </div>
+            </div>
+          </div>
+          <div class="m-divider"></div>
+
+          <div class="m-item-row" onclick="openItemDetail('v1','douro')">
+            <div class="m-item-img"><img src="https://picsum.photos/seed/portowine/128/128" alt=""></div>
+            <div class="m-item-body">
+              <h4>Douro Valley Wine Route</h4>
+              <div class="m-item-meta">
+                <span class="m-intent" data-i="go">go</span>
+                <span class="m-source">visitportugal.com</span>
+              </div>
+            </div>
+          </div>
+          <div class="m-divider"></div>
+
+          <div class="m-item-row" onclick="openItemDetail('v1','pancakes')">
+            <div class="m-item-img"><img src="https://picsum.photos/seed/pancake26/128/128" alt=""></div>
+            <div class="m-item-body">
+              <h4>Fluffy Vegan Blueberry Pancakes</h4>
+              <div class="m-item-meta">
+                <span class="m-intent" data-i="cook">cook</span>
+                <span class="m-source">rainbowplantlife.com</span>
+              </div>
+            </div>
+          </div>
+          <div class="m-divider"></div>
+
+          <div class="m-item-row" onclick="openItemDetail('v1','noguchi')">
+            <div class="m-item-img"><img src="https://picsum.photos/seed/blacklamp/128/128" alt=""></div>
+            <div class="m-item-body">
+              <h4>Noguchi Akari Floor Lamp</h4>
+              <div class="m-item-meta">
+                <span class="m-intent" data-i="buy">buy</span>
+                <span class="m-source">dwr.com</span>
+              </div>
+            </div>
+          </div>
+
+          <div style="height:20px"></div>
+        </div><!-- /v1-home -->
+
+        <!-- LIBRARY TAB -->
+        <div class="m-page" id="v1-library">
+          <div class="m-header">
+            <h1>Library</h1>
+            <div class="m-avatar"><span>M</span></div>
+          </div>
+
+          <!-- Category rows -->
+          <div class="m-section-header" style="padding-bottom:4px"><h3>Browse</h3></div>
+
+          <div class="m-cat-row" onclick="openCategoryDetail('v1','recipes')">
+            <div class="m-cat-thumb"><img src="https://picsum.photos/seed/cat-recipe/100/100" alt=""></div>
+            <div class="m-cat-info"><h4>Recipes</h4><p>68 saves</p></div>
+            <svg class="m-cat-arrow" viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg>
+          </div>
+          <div class="m-divider"></div>
+
+          <div class="m-cat-row" onclick="openCategoryDetail('v1','travel')">
+            <div class="m-cat-thumb"><img src="https://picsum.photos/seed/cat-travel/100/100" alt=""></div>
+            <div class="m-cat-info"><h4>Travel</h4><p>45 saves</p></div>
+            <svg class="m-cat-arrow" viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg>
+          </div>
+          <div class="m-divider"></div>
+
+          <div class="m-cat-row" onclick="openCategoryDetail('v1','building')">
+            <div class="m-cat-thumb"><img src="https://picsum.photos/seed/cat-build/100/100" alt=""></div>
+            <div class="m-cat-info"><h4>Building Materials</h4><p>52 saves</p></div>
+            <svg class="m-cat-arrow" viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg>
+          </div>
+          <div class="m-divider"></div>
+
+          <div class="m-cat-row">
+            <div class="m-cat-thumb"><img src="https://picsum.photos/seed/cat-design/100/100" alt=""></div>
+            <div class="m-cat-info"><h4>Design</h4><p>34 saves</p></div>
+            <svg class="m-cat-arrow" viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg>
+          </div>
+
+          <div style="height:20px"></div>
+        </div><!-- /v1-library -->
+
+        <!-- SEARCH TAB -->
+        <div class="m-page" id="v1-search">
+          <div class="m-header"><h1>Search</h1></div>
+          <div style="padding:0 18px;">
+            <div style="display:flex;align-items:center;gap:9px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-md);padding:11px 14px;">
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="var(--text-tertiary)" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.35-4.35"/></svg>
+              <input type="text" placeholder="Search your saves..." style="flex:1;border:none;outline:none;font-family:inherit;font-size:14px;color:var(--text-primary);background:none;">
+            </div>
+          </div>
+          <div style="padding:10px 18px 0;">
+            <div style="font-size:10px;font-weight:600;color:var(--text-tertiary);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:6px;">Filter by intent</div>
+            <div class="m-chips" style="padding-left:0;">
+              <span class="m-chip">buy</span>
+              <span class="m-chip">cook</span>
+              <span class="m-chip">go</span>
+              <span class="m-chip">learn</span>
+              <span class="m-chip">watch</span>
+            </div>
+          </div>
+          <div class="m-section-header"><h3>Recent</h3></div>
+          <div style="padding:0 18px;">
+            <div style="padding:10px 0;border-bottom:1px solid var(--border-subtle);font-size:13px;color:var(--text-secondary);">van solar panel</div>
+            <div style="padding:10px 0;border-bottom:1px solid var(--border-subtle);font-size:13px;color:var(--text-secondary);">vegan breakfast</div>
+            <div style="padding:10px 0;font-size:13px;color:var(--text-secondary);">lisbon restaurants</div>
+          </div>
+        </div><!-- /v1-search -->
+
+        <!-- SUBPAGES (dynamically populated by JS renderers) -->
+        <div class="m-subpage" id="v1-item-detail"></div>
+        <div class="m-subpage" id="v1-category-detail"></div>
+        <div class="m-subpage" id="v1-collection-detail"></div>
+
+        <!-- ADD MODAL -->
+        <div class="add-overlay" id="v1-add-overlay" onclick="closeAdd('v1')">
+          <div class="add-sheet" onclick="event.stopPropagation()">
+            <div class="add-handle"></div>
+            <h3>Save a link</h3>
+            <div class="add-field"><label>URL</label><input type="url" placeholder="Paste a link..."></div>
+            <div class="add-field"><label>Note</label><textarea rows="2" placeholder="Add a comment..."></textarea></div>
+            <div class="add-field"><label>Collection (optional)</label>
+              <div class="m-chips" style="padding:0;margin-top:4px;">
+                <span class="m-chip" onclick="this.classList.toggle('active')">Van Build</span>
+                <span class="m-chip" onclick="this.classList.toggle('active')">Italy Trip</span>
+                <span class="m-chip" onclick="this.classList.toggle('active')">The House</span>
+              </div>
+            </div>
+            <button class="add-submit">Save</button>
+          </div>
+        </div>
+
+        <!-- TAB BAR -->
+        <div class="m-tab-bar">
+          <button class="m-tab active" onclick="switchMTab('v1','home',this)">
+            <svg viewBox="0 0 24 24"><path d="M3 9.5L12 3l9 6.5V20a1 1 0 01-1 1H4a1 1 0 01-1-1V9.5z"/></svg>
+            <span>Home</span>
+          </button>
+          <button class="m-tab" onclick="switchMTab('v1','library',this)">
+            <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+            <span>Library</span>
+          </button>
+          <button class="m-tab" onclick="switchMTab('v1','search',this)">
+            <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.35-4.35"/></svg>
+            <span>Search</span>
+          </button>
+        </div>
+
+        <!-- FAB -->
+        <button class="m-fab" onclick="openAdd('v1')">
+          <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        </button>
+
+      </div><!-- /variant-v1 -->
+
+      <!-- ══════════════════════════
+           ADD NEW SCREENS BELOW
+           Copy the variant block above.
+           Change all "v1" to "v2", "v3", etc.
+           Add a matching sidebar-item and sidebar-about block.
+           ══════════════════════════ -->
+
+    </div><!-- /phone-frame -->
+  </div><!-- /phone-stage -->
+</div><!-- /desktop-shell -->
+
+
+<script>
+/* ══════════════════════════════════════════════
+   SAMPLE DATA
+   ══════════════════════════════════════════════
+   Trimmed to 5 items, 3 categories, 2 collections.
+   Enough to fill a screen. Add more as needed.
+   ══════════════════════════════════════════════ */
+
+const ITEMS = {
+  'brooklyn-flea': {
+    title: 'Brooklyn Flea & Smorgasburg',
+    source: 'brooklynflea.com',
+    intent: 'go', type: 'event', format: 'link',
+    img: 'bkmarket',
+    comment: 'Let\'s go this Saturday — the vintage section had great stuff last time',
+    mentions: ['Cristina'],
+    collections: [{ name: 'Date Nights', color: '#ec4899' }],
+    category: 'Travel', savedBy: 'Mark', date: 'Feb 18, 2026'
+  },
+  'renogy': {
+    title: 'Renogy 200W Solar Kit',
+    source: 'renogy.com',
+    intent: 'buy', type: 'product', format: 'link',
+    img: 'solarpanel7',
+    comment: 'Chris from the forum recommended this one — 200W should be enough for our setup',
+    mentions: [],
+    collections: [{ name: 'Van Build', color: '#3b82f6' }],
+    category: 'Building Materials', savedBy: 'Mark', date: 'Feb 20, 2026'
+  },
+  'white-bean': {
+    title: 'White Bean & Roasted Garlic Stew',
+    source: 'minimalistbaker.com',
+    intent: 'cook', type: 'recipe', format: 'link',
+    img: 'vegstew',
+    comment: 'Perfect for cold nights — Cristina loved the last batch',
+    mentions: ['Cristina'],
+    collections: [],
+    category: 'Recipes', savedBy: 'Cristina', date: 'Feb 24, 2026'
+  },
+  'douro': {
+    title: 'Douro Valley Wine Route',
+    source: 'visitportugal.com',
+    intent: 'go', type: 'place', format: 'link',
+    img: 'portowine',
+    comment: 'For the Portugal leg of the trip',
+    mentions: [],
+    collections: [{ name: 'Italy Trip', color: '#f59e0b' }],
+    category: 'Travel', savedBy: 'Mark', date: 'Aug 3, 2025'
+  },
+  'pancakes': {
+    title: 'Fluffy Vegan Blueberry Pancakes',
+    source: 'rainbowplantlife.com',
+    intent: 'cook', type: 'recipe', format: 'link',
+    img: 'pancake26',
+    comment: 'Cristina we have to make these this weekend',
+    mentions: ['Cristina'],
+    collections: [],
+    category: 'Recipes', savedBy: 'Mark', date: 'Feb 15, 2026'
+  },
+  'noguchi': {
+    title: 'Noguchi Akari Floor Lamp',
+    source: 'dwr.com',
+    intent: 'buy', type: 'product', format: 'link',
+    img: 'blacklamp',
+    comment: 'For the living room corner',
+    mentions: [],
+    collections: [{ name: 'The House', color: '#10b981' }],
+    category: 'Design', savedBy: 'Mark', date: 'Jul 15, 2025'
+  },
+};
+
+const CATEGORIES = {
+  'recipes':  { name: 'Recipes',            count: 68, img: 'cat-recipe', subs: ['Soups', 'Mains', 'Breakfast'],          items: ['white-bean', 'pancakes'] },
+  'travel':   { name: 'Travel',             count: 45, img: 'cat-travel', subs: ['Portugal', 'Italy', 'NYC'],              items: ['brooklyn-flea', 'douro'] },
+  'building': { name: 'Building Materials', count: 52, img: 'cat-build',  subs: ['Solar', 'Insulation', 'Wood'],           items: ['renogy'] },
+};
+
+const COLLECTIONS = {
+  'van-build':  { name: 'Van Build',  color: '#3b82f6', count: 47, items: ['renogy'] },
+  'italy-trip': { name: 'Italy Trip', color: '#f59e0b', count: 23, items: ['douro'] },
+};
+
+
+/* ══════════════════════════════════════════════
+   CTA HELPERS
+   ══════════════════════════════════════════════ */
+
+const FORMAT_VERB = { video: 'Watch', audio: 'Listen to', image: 'View', link: 'Open', pdf: 'Read' };
+
+const INTENT_ICON = {
+  buy:     '<path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/>',
+  cook:    '<path d="M12 2a7 7 0 017 7c0 2.38-1.19 4.47-3 5.74V17a2 2 0 01-2 2h-4a2 2 0 01-2-2v-2.26C6.19 13.47 5 11.38 5 9a7 7 0 017-7z"/>',
+  go:      '<polygon points="3 11 22 2 13 21 11 13 3 11"/>',
+  create:  '<path d="M12 19l7-7 3 3-7 7-3-3z"/><path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"/>',
+  eat:     '<circle cx="12" cy="12" r="9"/><path d="M12 8v4l2 2"/>',
+  read:    '<path d="M2 3h6a4 4 0 014 4v14a3 3 0 00-3-3H2z"/><path d="M22 3h-6a4 4 0 00-4 4v14a3 3 0 013-3h7z"/>',
+  watch:   '<polygon points="5 3 19 12 5 21 5 3"/>',
+  listen:  '<path d="M3 18v-6a9 9 0 0118 0v6"/><path d="M21 19a2 2 0 01-2 2h-1a2 2 0 01-2-2v-3a2 2 0 012-2h3zM3 19a2 2 0 002 2h1a2 2 0 002-2v-3a2 2 0 00-2-2H3z"/>',
+  do:      '<polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/>',
+  learn:   '<circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/>',
+  hire:    '<path d="M16 21v-2a4 4 0 00-4-4H6a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/>',
+  book:    '<rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>',
+  gift:    '<polyline points="20 12 20 22 4 22 4 12"/><rect x="2" y="7" width="20" height="5"/><line x1="12" y1="22" x2="12" y2="7"/><path d="M12 7H7.5a2.5 2.5 0 010-5C11 2 12 7 12 7z"/><path d="M12 7h4.5a2.5 2.5 0 000-5C13 2 12 7 12 7z"/>',
+  inspire: '<polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>',
+};
+
+function getCTA(item) {
+  const verb = FORMAT_VERB[item.format] || 'Open';
+  const noun = item.type.charAt(0).toUpperCase() + item.type.slice(1);
+  return `${verb} ${noun}`;
+}
+
+
+/* ══════════════════════════════════════════════
+   NAVIGATION
+   ══════════════════════════════════════════════ */
+
+function switchVariant(id, el) {
+  document.querySelectorAll('.variant').forEach(v => v.classList.remove('active'));
+  document.getElementById('variant-' + id).classList.add('active');
+  document.querySelectorAll('.sidebar-item').forEach(s => s.classList.remove('active'));
+  el.classList.add('active');
+  // Update about panel
+  document.querySelectorAll('[class^="sidebar-about-"]').forEach(a => a.style.display = 'none');
+  const about = document.querySelector('.sidebar-about-' + id);
+  if (about) about.style.display = 'block';
+}
+
+function switchMTab(variant, page, el) {
+  // Close any open subpages first
+  document.querySelectorAll('#variant-' + variant + ' .m-subpage').forEach(s => s.classList.remove('active'));
+  const prefix = variant + '-';
+  document.querySelectorAll('#variant-' + variant + ' .m-page').forEach(p => p.classList.remove('active'));
+  document.getElementById(prefix + page).classList.add('active');
+  el.closest('.m-tab-bar').querySelectorAll('.m-tab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+}
+
+function openSubpage(id) {
+  document.getElementById(id).classList.add('active');
+}
+
+function closeSubpage(id) {
+  document.getElementById(id).classList.remove('active');
+}
+
+
+/* ══════════════════════════════════════════════
+   ADD MODAL
+   ══════════════════════════════════════════════ */
+
+function openAdd(variant)  { document.getElementById(variant + '-add-overlay').classList.add('active'); }
+function closeAdd(variant) { document.getElementById(variant + '-add-overlay').classList.remove('active'); }
+
+
+/* ══════════════════════════════════════════════
+   CHIP TOGGLE
+   ══════════════════════════════════════════════ */
+
+function toggleChip(el) {
+  el.parentElement.querySelectorAll('.m-chip').forEach(c => c.classList.remove('active'));
+  el.classList.add('active');
+}
+
+
+/* ══════════════════════════════════════════════
+   ITEM DETAIL RENDERER
+   ══════════════════════════════════════════════
+   Opens a subpage with full item detail.
+   Usage: openItemDetail('v1', 'renogy')
+   ══════════════════════════════════════════════ */
+
+function openItemDetail(variant, itemKey) {
+  const item = ITEMS[itemKey];
+  if (!item) return;
+  const id = variant + '-item-detail';
+  const el = document.getElementById(id);
+
+  const commentHTML = item.comment
+    ? `<div class="detail-comment">"${item.comment.replace(/(Cristina|Mark)/g, '<span class="mention">@$1</span>')}"</div>`
+    : '';
+
+  const collectionsHTML = item.collections.length
+    ? `<div class="detail-section-label">Collections</div>
+       <div class="detail-collections">${item.collections.map(c =>
+         `<span class="detail-col-tag" onclick="openCollectionByName('${variant}','${c.name}')">
+           <span class="dot" style="background:${c.color}"></span>${c.name}
+         </span>`
+       ).join('')}</div>`
+    : '';
+
+  el.innerHTML = `
+    <div class="detail-hero">
+      <img src="https://picsum.photos/seed/${item.img}/780/400" alt="">
+      <button class="detail-hero-back" onclick="closeSubpage('${id}')">
+        <svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg>
+      </button>
+    </div>
+    <div class="detail-body">
+      <div class="detail-title">${item.title}</div>
+      <div class="detail-meta-row">
+        <span class="m-intent" data-i="${item.intent}">${item.intent}</span>
+        <span class="m-source">${item.source}</span>
+      </div>
+      <button class="detail-cta">
+        <svg viewBox="0 0 24 24">${INTENT_ICON[item.intent] || ''}</svg>
+        ${getCTA(item)}
+      </button>
+      ${commentHTML}
+      <div class="detail-section-label">Details</div>
+      <div class="detail-meta-grid">
+        <div class="detail-meta-cell"><dt>Saved by</dt><dd>${item.savedBy}</dd></div>
+        <div class="detail-meta-cell"><dt>Date</dt><dd>${item.date}</dd></div>
+        <div class="detail-meta-cell"><dt>Category</dt><dd>${item.category}</dd></div>
+        <div class="detail-meta-cell"><dt>Intent</dt><dd>${item.intent}</dd></div>
+      </div>
+      ${collectionsHTML}
+    </div>
+  `;
+  openSubpage(id);
+}
+
+
+/* ══════════════════════════════════════════════
+   CATEGORY DETAIL RENDERER
+   ══════════════════════════════════════════════
+   Opens a subpage listing items in a category.
+   Usage: openCategoryDetail('v1', 'recipes')
+   ══════════════════════════════════════════════ */
+
+function openCategoryDetail(variant, catKey) {
+  const cat = CATEGORIES[catKey];
+  if (!cat) return;
+  const id = variant + '-category-detail';
+  const el = document.getElementById(id);
+
+  const subsHTML = cat.subs && cat.subs.length
+    ? `<div class="m-chips" style="padding-left:18px;padding-right:18px;padding-bottom:6px;">
+         <span class="m-chip active">All</span>
+         ${cat.subs.map(s => `<span class="m-chip" onclick="toggleChip(this)">${s}</span>`).join('')}
+       </div>`
+    : '';
+
+  const itemsHTML = (cat.items || []).map(key => {
+    const it = ITEMS[key];
+    if (!it) return '';
+    return `
+      <div class="m-item-row" onclick="openItemDetail('${variant}','${key}')">
+        <div class="m-item-img"><img src="https://picsum.photos/seed/${it.img}/128/128" alt=""></div>
+        <div class="m-item-body">
+          <h4>${it.title}</h4>
+          <div class="m-item-meta">
+            <span class="m-intent" data-i="${it.intent}">${it.intent}</span>
+            <span class="m-source">${it.source}</span>
+          </div>
+        </div>
+      </div>
+      <div class="m-divider"></div>`;
+  }).join('');
+
+  el.innerHTML = `
+    <div class="list-detail-header">
+      <button class="m-back-btn" onclick="closeSubpage('${id}')">
+        <svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg>
+      </button>
+      <div class="list-detail-title"><h2>${cat.name}</h2><p>${cat.count} saves</p></div>
+    </div>
+    ${subsHTML}
+    ${itemsHTML || '<div style="padding:40px 18px;text-align:center;color:var(--text-tertiary);font-size:13px;">No sample items yet</div>'}
+  `;
+  openSubpage(id);
+}
+
+
+/* ══════════════════════════════════════════════
+   COLLECTION DETAIL RENDERER
+   ══════════════════════════════════════════════
+   Opens a subpage listing items in a collection.
+   Usage: openCollectionDetail('v1', 'van-build')
+   ══════════════════════════════════════════════ */
+
+function openCollectionDetail(variant, colKey) {
+  const col = COLLECTIONS[colKey];
+  if (!col) return;
+  const id = variant + '-collection-detail';
+  const el = document.getElementById(id);
+
+  const itemsHTML = (col.items || []).map(key => {
+    const it = ITEMS[key];
+    if (!it) return '';
+    return `
+      <div class="m-item-row" onclick="openItemDetail('${variant}','${key}')">
+        <div class="m-item-img"><img src="https://picsum.photos/seed/${it.img}/128/128" alt=""></div>
+        <div class="m-item-body">
+          <h4>${it.title}</h4>
+          <div class="m-item-meta">
+            <span class="m-intent" data-i="${it.intent}">${it.intent}</span>
+            <span class="m-source">${it.source}</span>
+          </div>
+        </div>
+      </div>
+      <div class="m-divider"></div>`;
+  }).join('');
+
+  el.innerHTML = `
+    <div class="list-detail-header">
+      <button class="m-back-btn" onclick="closeSubpage('${id}')">
+        <svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg>
+      </button>
+      <div class="list-detail-dot" style="background:${col.color}"></div>
+      <div class="list-detail-title"><h2>${col.name}</h2><p>${col.count} saves</p></div>
+    </div>
+    ${itemsHTML || '<div style="padding:40px 18px;text-align:center;color:var(--text-tertiary);font-size:13px;">No sample items yet</div>'}
+  `;
+  openSubpage(id);
+}
+
+function openCollectionByName(variant, name) {
+  const key = Object.keys(COLLECTIONS).find(k => COLLECTIONS[k].name === name);
+  if (key) openCollectionDetail(variant, key);
+}
+
+</script>
+</body>
+</html>
