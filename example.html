@@ -1,9 +1,58 @@
+<!--
+═══════════════════════════════════════════════════════════════════
+  APPBOARD — EXAMPLE (Airbnb-like prototype)
+  Reference implementation. Start from index.html for new projects.
+  Read LLMCONTEXT.md before building. Full spec in SPEC.md.
+═══════════════════════════════════════════════════════════════════
+
+  WHAT THIS IS
+  A desktop shell (sidebar + iPhone frame) for prototyping mobile
+  app ideas as plain HTML. One file = one project. Each sidebar
+  entry is a prototype — a whole idea, not a single screen.
+
+  MENTAL MODEL
+  • Sidebar entry = one prototype (an idea to explore)
+  • Inside a prototype = however many screens the idea needs
+    (one layout, a two-screen flow, a tabbed app, anything)
+  • Tab bars, subpages, and navigation all live inside the variant
+
+  TO ADD A PROTOTYPE
+  1. Add a .sidebar-item with onclick="switchVariant('v2', this)"
+  2. Add a .sidebar-about-v2 block in the about panel
+  3. Add <div class="variant" id="variant-v2"> in .phone-frame
+  4. Add variant CSS prefixed with .v2- in the marked CSS section
+
+  KEY RULES
+  • Every .m-page id follows: {variant}-{pagename} (e.g. v1-home)
+  • Every .m-subpage id follows: {variant}-{name} (e.g. v1-detail)
+  • Every .m-h-scroll must end with <div class="m-h-scroll-end">
+  • Every .m-page content ends with <div style="height:20px">
+    (or height:100px if a FAB or sticky bar is present)
+  • All variant CSS is prefixed with the variant id (.v1-, .v2-, …)
+
+  NAVIGATION JS
+  switchVariant('v2', el)      — switch prototype from sidebar
+  switchMTab('v1','home', el)  — switch tab within a prototype
+  openSubpage('v1-detail')     — slide in a subpage
+  closeSubpage('v1-detail')    — slide back out
+
+  SHARED COMPONENT CLASSES (all prefixed .m-)
+  Layout:   .m-page  .m-subpage  .m-tab-bar  .m-tab  .m-fab
+  Headers:  .m-header  .m-back-header  .m-section-header  .m-label
+  Lists:    .m-item-row  .m-cat-row  .m-col-card
+  Scroll:   .m-h-scroll + .m-h-scroll-end  .m-chips  .m-chip
+  Misc:     .m-divider  .m-source  .m-avatar  .m-intent[data-i="…"]
+  Animation: add class="stagger" to any flex container
+
+  SEE SPEC.md FOR FULL COMPONENT REFERENCE
+═══════════════════════════════════════════════════════════════════
+-->
 <!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>AppBoard — [Project Name]</title>
+<title>AppBoard — Example</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -317,6 +366,9 @@ body { height: 100%; overflow: hidden; }
   -ms-overflow-style: none; scrollbar-width: none;
 }
 .m-h-scroll::-webkit-scrollbar { display: none; }
+/* Trailing spacer — browsers clip padding-right on overflow scroll containers.
+   Fix: add <div class="m-h-scroll-end"></div> as the last child of any .m-h-scroll */
+.m-h-scroll-end { flex: 0 0 18px; min-width: 18px; }
 
 /* ── Divider ── */
 .m-divider { height: 1px; background: var(--border-subtle); margin: 0 18px; }
@@ -526,24 +578,105 @@ body { height: 100%; overflow: hidden; }
    Convention: prefix with variant ID, e.g. .v1-hero, .v1-card
    ══════════════════════════════════════════════ */
 
-/* Example variant (v1) */
-.v1-hero {
-  margin: 0 18px;
-  border-radius: var(--radius-lg);
-  overflow: hidden;
-  position: relative;
-  cursor: pointer;
+/* ── v1: Example — Airbnb-like home ── */
+
+/* Listing card (horizontally scrollable) */
+.v1-listing-card {
+  flex: 0 0 220px; scroll-snap-align: start;
+  cursor: pointer; transition: transform var(--transition-fast);
+}
+.v1-listing-card:active { transform: scale(0.97); }
+.v1-listing-img {
+  width: 100%; height: 160px; border-radius: var(--radius-lg);
+  overflow: hidden; background: var(--border-subtle); position: relative; margin-bottom: 8px;
+}
+.v1-listing-img img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.v1-listing-heart {
+  position: absolute; top: 10px; right: 10px;
+  width: 28px; height: 28px; border-radius: 50%;
+  background: rgba(255,255,255,0.9);
+  display: flex; align-items: center; justify-content: center;
+}
+.v1-listing-heart svg { width: 14px; height: 14px; stroke: var(--text-primary); stroke-width: 2; fill: none; }
+.v1-listing-info h4 { font-size: 13px; font-weight: 600; letter-spacing: -0.01em; margin-bottom: 2px; }
+.v1-listing-info p { font-size: 12px; color: var(--text-secondary); margin-bottom: 2px; }
+.v1-listing-price { font-size: 13px; font-weight: 600; }
+.v1-listing-price span { font-weight: 400; color: var(--text-secondary); }
+.v1-listing-rating { display: flex; align-items: center; gap: 3px; font-size: 12px; font-weight: 500; }
+
+/* Category filter pill (icon + label, Airbnb-style top filter bar) */
+.v1-cat-bar {
+  display: flex; gap: 20px; overflow-x: auto; padding: 14px 18px 0;
+  -ms-overflow-style: none; scrollbar-width: none; border-bottom: 1px solid var(--border-subtle);
+}
+.v1-cat-bar::-webkit-scrollbar { display: none; }
+.v1-cat-pill {
+  flex-shrink: 0; display: flex; flex-direction: column; align-items: center; gap: 5px;
+  padding-bottom: 12px; cursor: pointer; border-bottom: 2px solid transparent;
+  transition: all var(--transition-fast);
+}
+.v1-cat-pill.active { border-bottom-color: var(--text-primary); }
+.v1-cat-pill svg { width: 22px; height: 22px; stroke: var(--text-tertiary); stroke-width: 1.6; fill: none; }
+.v1-cat-pill.active svg { stroke: var(--text-primary); }
+.v1-cat-pill span { font-size: 10px; font-weight: 600; color: var(--text-tertiary); white-space: nowrap; }
+.v1-cat-pill.active span { color: var(--text-primary); }
+
+/* Map toggle button */
+.v1-map-btn {
+  position: absolute; bottom: calc(var(--tab-bar-h) + 16px); left: 50%; transform: translateX(-50%);
+  display: flex; align-items: center; gap: 7px;
+  padding: 10px 18px; border-radius: 24px;
+  background: var(--text-primary); color: white;
+  border: none; cursor: pointer; font-family: inherit;
+  font-size: 13px; font-weight: 600;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.25);
+  z-index: 150; transition: transform var(--transition-fast);
+}
+.v1-map-btn:active { transform: translateX(-50%) scale(0.96); }
+.v1-map-btn svg { width: 15px; height: 15px; stroke: white; stroke-width: 2; fill: none; }
+
+/* Listing detail subpage */
+.v1-detail-photos {
+  width: 100%; height: 260px; overflow: hidden; position: relative;
+}
+.v1-detail-photos img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.v1-detail-back {
+  position: absolute; top: 48px; left: 14px;
+  width: 32px; height: 32px; border-radius: 50%;
+  background: rgba(255,255,255,0.9); border: none; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.15);
+}
+.v1-detail-back svg { width: 18px; height: 18px; stroke: var(--text-primary); stroke-width: 2; fill: none; }
+.v1-detail-body { padding: 16px 18px 100px; } /* 100px clears the absolute reserve bar */
+.v1-detail-title { font-size: 20px; font-weight: 700; letter-spacing: -0.02em; line-height: 1.2; margin-bottom: 4px; }
+.v1-detail-sub { font-size: 13px; color: var(--text-secondary); margin-bottom: 14px; }
+.v1-detail-divider { height: 1px; background: var(--border-subtle); margin: 16px 0; }
+.v1-detail-host { display: flex; align-items: center; gap: 12px; }
+.v1-detail-host-av { width: 44px; height: 44px; border-radius: 50%; overflow: hidden; flex-shrink: 0; }
+.v1-detail-host-av img { width: 100%; height: 100%; object-fit: cover; }
+.v1-detail-host-info h4 { font-size: 14px; font-weight: 600; }
+.v1-detail-host-info p { font-size: 12px; color: var(--text-secondary); }
+.v1-reserve-bar {
+  position: absolute; bottom: 0; left: 0; right: 0;
+  background: rgba(255,255,255,0.95); backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-top: 1px solid var(--border-subtle);
+  padding: 12px 18px 20px;
+  display: flex; align-items: center; justify-content: space-between;
+  z-index: 10;
+}
+.v1-reserve-price { font-size: 16px; font-weight: 700; }
+.v1-reserve-price span { font-size: 12px; font-weight: 400; color: var(--text-secondary); }
+.v1-reserve-btn {
+  padding: 12px 22px; border-radius: 10px;
+  background: #e61e4d; color: white;
+  border: none; cursor: pointer; font-family: inherit;
+  font-size: 14px; font-weight: 700;
   transition: transform var(--transition-fast);
 }
-.v1-hero:active { transform: scale(0.98); }
-.v1-hero img { width: 100%; height: 180px; object-fit: cover; display: block; }
-.v1-hero-ov {
-  position: absolute; inset: 0;
-  background: linear-gradient(to top, rgba(24,24,27,0.85) 0%, rgba(24,24,27,0.25) 50%, transparent 100%);
-}
-.v1-hero-content { position: absolute; bottom: 0; left: 0; right: 0; padding: 16px 18px; }
-.v1-hero-tag { font-size: 11px; font-weight: 600; color: #6ee7b7; margin-bottom: 5px; }
-.v1-hero-content h4 { font-size: 17px; font-weight: 700; color: white; letter-spacing: -0.02em; line-height: 1.2; margin-bottom: 5px; }
+.v1-reserve-btn:active { transform: scale(0.96); }
+
 
 </style>
 </head>
@@ -553,28 +686,30 @@ body { height: 100%; overflow: hidden; }
 
   <!-- ═══════ SIDEBAR ═══════ -->
   <div class="sidebar">
-    <div class="sidebar-logo">[Project]</div>
+    <div class="sidebar-logo">AppBoard</div>
 
     <div class="sidebar-section">
-      <div class="sidebar-section-label">Screens</div>
+      <div class="sidebar-section-label">Prototypes</div>
 
-      <!-- Add a sidebar-item per screen. Match the onclick id to the variant id below. -->
+      <!-- One entry per prototype. Match onclick id to variant-{id} below. -->
       <div class="sidebar-item active" onclick="switchVariant('v1', this)">
         <div class="sidebar-item-dot" style="background: var(--accent)"></div>
-        Screen 1 — Example
+        Example — Airbnb
       </div>
-      <!-- <div class="sidebar-item" onclick="switchVariant('v2', this)">
+      <!-- Add more prototypes here:
+      <div class="sidebar-item" onclick="switchVariant('v2', this)">
         <div class="sidebar-item-dot" style="background: #3b82f6"></div>
-        Screen 2 — Name
-      </div> -->
+        Prototype B — Name
+      </div>
+      -->
     </div>
 
-    <!-- About panel — shows description for the active screen -->
+    <!-- About panel — one block per prototype, keyed to sidebar id -->
     <div class="sidebar-section sidebar-about">
       <div class="sidebar-about-v1">
-        <div class="sidebar-section-label">About this screen</div>
+        <div class="sidebar-section-label">About</div>
         <div style="padding:0 8px; font-size:11px; color:var(--text-secondary); line-height:1.5;">
-          Replace this with a one-paragraph description of what this screen is exploring and why.
+          Airbnb-style home screen. Category filter bar, horizontally scrolling listing cards, tap to open a listing detail subpage.
         </div>
       </div>
     </div>
@@ -584,251 +719,239 @@ body { height: 100%; overflow: hidden; }
   <div class="phone-stage">
     <div class="phone-frame">
 
-      <!-- ══════════════════════════
-           SCREEN v1 — EXAMPLE
-           ══════════════════════════
-           This is a reference implementation demonstrating
-           how shared components compose together.
-           Delete it and build your own screens.
-           ══════════════════════════ -->
+      <!-- ══════════════════════════════════════
+           PROTOTYPE v1 — EXAMPLE (Airbnb-like)
+           One prototype = a full experience.
+           Multiple tabs/pages live inside here.
+           This is the reference — delete and
+           replace with your own prototype.
+           ══════════════════════════════════════ -->
       <div class="variant active" id="variant-v1">
 
-        <!-- HOME TAB -->
-        <div class="m-page active" id="v1-home">
+        <!-- ── EXPLORE TAB (home) ── -->
+        <div class="m-page active" id="v1-explore">
 
-          <!-- Header with avatar -->
-          <div class="m-header">
-            <h1>Home</h1>
+          <!-- Header -->
+          <div class="m-header" style="padding-bottom:8px;">
+            <h1>Explore</h1>
             <div class="m-avatar"><span>M</span></div>
           </div>
 
-          <!-- Hero card with overlay -->
-          <div class="m-label">Coming up</div>
-          <div class="v1-hero" onclick="openItemDetail('v1','brooklyn-flea')">
-            <img src="https://picsum.photos/seed/bkmarket/780/360" alt="">
-            <div class="v1-hero-ov"></div>
-            <div class="v1-hero-content">
-              <div class="v1-hero-tag">This Saturday</div>
-              <h4>Brooklyn Flea & Smorgasburg</h4>
-              <div class="m-item-meta">
-                <span class="m-intent" data-i="go">go</span>
-                <span class="m-source" style="color:rgba(255,255,255,0.5)">brooklynflea.com</span>
+          <!-- Search bar -->
+          <div style="padding:0 18px 4px;">
+            <div style="display:flex;align-items:center;gap:10px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-md);padding:11px 14px;box-shadow:0 1px 6px rgba(0,0,0,0.06);">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--text-tertiary)" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.35-4.35"/></svg>
+              <div>
+                <div style="font-size:13px;font-weight:600;color:var(--text-primary);">Anywhere · Any week</div>
+                <div style="font-size:11px;color:var(--text-secondary);">Add guests</div>
               </div>
             </div>
           </div>
 
-          <!-- Section with horizontal-scrolling collection cards -->
-          <div class="m-section-header">
-            <h3>Collections</h3>
-            <button class="m-section-link">See all</button>
-          </div>
-          <div class="m-h-scroll stagger">
-            <div class="m-col-card" onclick="openCollectionDetail('v1','van-build')">
-              <div class="m-col-dot" style="background:#3b82f6"></div>
-              <h4>Van Build</h4><p>47 saves</p>
+          <!-- Category filter bar -->
+          <div class="v1-cat-bar">
+            <div class="v1-cat-pill active" onclick="selectCat(this)">
+              <svg viewBox="0 0 24 24"><path d="M3 9.5L12 3l9 6.5V20a1 1 0 01-1 1H4a1 1 0 01-1-1V9.5z"/></svg>
+              <span>Rooms</span>
             </div>
-            <div class="m-col-card" onclick="openCollectionDetail('v1','italy-trip')">
-              <div class="m-col-dot" style="background:#f59e0b"></div>
-              <h4>Italy Trip</h4><p>23 saves</p>
+            <div class="v1-cat-pill" onclick="selectCat(this)">
+              <svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+              <span>Cabins</span>
             </div>
-            <div class="m-col-card">
-              <div class="m-col-dot" style="background:#10b981"></div>
-              <h4>The House</h4><p>89 saves</p>
+            <div class="v1-cat-pill" onclick="selectCat(this)">
+              <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 010 20M12 2a15.3 15.3 0 000 20"/></svg>
+              <span>Beachfront</span>
             </div>
-          </div>
-
-          <!-- Filter chips -->
-          <div class="m-section-header"><h3>Recent saves</h3></div>
-          <div class="m-chips">
-            <span class="m-chip active" onclick="toggleChip(this)">All</span>
-            <span class="m-chip" onclick="toggleChip(this)">buy</span>
-            <span class="m-chip" onclick="toggleChip(this)">cook</span>
-            <span class="m-chip" onclick="toggleChip(this)">go</span>
-            <span class="m-chip" onclick="toggleChip(this)">learn</span>
+            <div class="v1-cat-pill" onclick="selectCat(this)">
+              <svg viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+              <span>Top rated</span>
+            </div>
+            <div class="v1-cat-pill" onclick="selectCat(this)">
+              <svg viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg>
+              <span>Wishlists</span>
+            </div>
           </div>
 
-          <!-- Item rows -->
-          <div class="m-item-row" onclick="openItemDetail('v1','renogy')">
-            <div class="m-item-img"><img src="https://picsum.photos/seed/solarpanel7/128/128" alt=""></div>
-            <div class="m-item-body">
-              <h4>Renogy 200W Solar Kit</h4>
-              <div class="m-item-meta">
-                <span class="m-intent" data-i="buy">buy</span>
-                <span class="m-source">renogy.com</span>
+          <!-- Listing cards (horizontal scroll) -->
+          <div class="m-h-scroll stagger" style="padding:14px 18px 4px;">
+
+            <div class="v1-listing-card" onclick="openSubpage('v1-listing-detail')">
+              <div class="v1-listing-img">
+                <img src="https://picsum.photos/seed/apt-brooklyn/440/320" alt="">
+                <div class="v1-listing-heart"><svg viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg></div>
+              </div>
+              <div class="v1-listing-info">
+                <h4>Loft in Williamsburg</h4>
+                <p>Brooklyn, New York</p>
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-top:2px;">
+                  <span class="v1-listing-price">$185 <span>/ night</span></span>
+                  <span class="v1-listing-rating">★ 4.92</span>
+                </div>
               </div>
             </div>
-          </div>
-          <div class="m-divider"></div>
 
-          <div class="m-item-row" onclick="openItemDetail('v1','white-bean')">
-            <div class="m-item-img"><img src="https://picsum.photos/seed/vegstew/128/128" alt=""></div>
-            <div class="m-item-body">
-              <h4>White Bean & Roasted Garlic Stew</h4>
-              <div class="m-item-meta">
-                <span class="m-intent" data-i="cook">cook</span>
-                <span class="m-source">minimalistbaker.com</span>
+            <div class="v1-listing-card">
+              <div class="v1-listing-img">
+                <img src="https://picsum.photos/seed/apt-mtn/440/320" alt="">
+                <div class="v1-listing-heart"><svg viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg></div>
+              </div>
+              <div class="v1-listing-info">
+                <h4>Cabin in Catskills</h4>
+                <p>Woodstock, New York</p>
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-top:2px;">
+                  <span class="v1-listing-price">$240 <span>/ night</span></span>
+                  <span class="v1-listing-rating">★ 4.88</span>
+                </div>
               </div>
             </div>
-          </div>
-          <div class="m-divider"></div>
 
-          <div class="m-item-row" onclick="openItemDetail('v1','douro')">
-            <div class="m-item-img"><img src="https://picsum.photos/seed/portowine/128/128" alt=""></div>
-            <div class="m-item-body">
-              <h4>Douro Valley Wine Route</h4>
-              <div class="m-item-meta">
-                <span class="m-intent" data-i="go">go</span>
-                <span class="m-source">visitportugal.com</span>
+            <div class="v1-listing-card">
+              <div class="v1-listing-img">
+                <img src="https://picsum.photos/seed/apt-beach/440/320" alt="">
+                <div class="v1-listing-heart"><svg viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg></div>
+              </div>
+              <div class="v1-listing-info">
+                <h4>Beach house, Montauk</h4>
+                <p>Montauk, New York</p>
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-top:2px;">
+                  <span class="v1-listing-price">$420 <span>/ night</span></span>
+                  <span class="v1-listing-rating">★ 4.97</span>
+                </div>
               </div>
             </div>
-          </div>
-          <div class="m-divider"></div>
 
-          <div class="m-item-row" onclick="openItemDetail('v1','pancakes')">
-            <div class="m-item-img"><img src="https://picsum.photos/seed/pancake26/128/128" alt=""></div>
-            <div class="m-item-body">
-              <h4>Fluffy Vegan Blueberry Pancakes</h4>
-              <div class="m-item-meta">
-                <span class="m-intent" data-i="cook">cook</span>
-                <span class="m-source">rainbowplantlife.com</span>
+            <div class="m-h-scroll-end"></div>
+          </div><!-- /h-scroll -->
+
+          <!-- Second row -->
+          <div class="m-section-header"><h3>Near you</h3></div>
+          <div class="m-h-scroll" style="padding-bottom:14px;">
+
+            <div class="v1-listing-card">
+              <div class="v1-listing-img">
+                <img src="https://picsum.photos/seed/apt-studio/440/320" alt="">
+                <div class="v1-listing-heart"><svg viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg></div>
+              </div>
+              <div class="v1-listing-info">
+                <h4>Studio in Bushwick</h4>
+                <p>Brooklyn, New York</p>
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-top:2px;">
+                  <span class="v1-listing-price">$110 <span>/ night</span></span>
+                  <span class="v1-listing-rating">★ 4.79</span>
+                </div>
               </div>
             </div>
-          </div>
-          <div class="m-divider"></div>
 
-          <div class="m-item-row" onclick="openItemDetail('v1','noguchi')">
-            <div class="m-item-img"><img src="https://picsum.photos/seed/blacklamp/128/128" alt=""></div>
-            <div class="m-item-body">
-              <h4>Noguchi Akari Floor Lamp</h4>
-              <div class="m-item-meta">
-                <span class="m-intent" data-i="buy">buy</span>
-                <span class="m-source">dwr.com</span>
+            <div class="v1-listing-card">
+              <div class="v1-listing-img">
+                <img src="https://picsum.photos/seed/apt-harlem/440/320" alt="">
+                <div class="v1-listing-heart"><svg viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg></div>
+              </div>
+              <div class="v1-listing-info">
+                <h4>Brownstone in Harlem</h4>
+                <p>Manhattan, New York</p>
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-top:2px;">
+                  <span class="v1-listing-price">$155 <span>/ night</span></span>
+                  <span class="v1-listing-rating">★ 4.85</span>
+                </div>
               </div>
             </div>
+
+            <div class="m-h-scroll-end"></div>
           </div>
 
-          <div style="height:20px"></div>
-        </div><!-- /v1-home -->
+          <!-- Map toggle -->
+          <button class="v1-map-btn">
+            <svg viewBox="0 0 24 24"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/><line x1="8" y1="2" x2="8" y2="18"/><line x1="16" y1="6" x2="16" y2="22"/></svg>
+            Show map
+          </button>
 
-        <!-- LIBRARY TAB -->
-        <div class="m-page" id="v1-library">
-          <div class="m-header">
-            <h1>Library</h1>
-            <div class="m-avatar"><span>M</span></div>
+          <div style="height:100px"></div>
+        </div><!-- /v1-explore -->
+
+        <!-- ── WISHLISTS TAB ── -->
+        <div class="m-page" id="v1-wishlists">
+          <div class="m-header"><h1>Wishlists</h1><div class="m-avatar"><span>M</span></div></div>
+          <div style="padding:60px 18px;text-align:center;color:var(--text-secondary);">
+            <div style="font-size:32px;margin-bottom:12px;">♡</div>
+            <div style="font-size:15px;font-weight:600;color:var(--text-primary);margin-bottom:6px;">No wishlists yet</div>
+            <div style="font-size:13px;line-height:1.5;">Tap the heart on any listing to save it here.</div>
           </div>
+        </div>
 
-          <!-- Category rows -->
-          <div class="m-section-header" style="padding-bottom:4px"><h3>Browse</h3></div>
-
-          <div class="m-cat-row" onclick="openCategoryDetail('v1','recipes')">
-            <div class="m-cat-thumb"><img src="https://picsum.photos/seed/cat-recipe/100/100" alt=""></div>
-            <div class="m-cat-info"><h4>Recipes</h4><p>68 saves</p></div>
-            <svg class="m-cat-arrow" viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg>
+        <!-- ── TRIPS TAB ── -->
+        <div class="m-page" id="v1-trips">
+          <div class="m-header"><h1>Trips</h1><div class="m-avatar"><span>M</span></div></div>
+          <div style="padding:60px 18px;text-align:center;color:var(--text-secondary);">
+            <div style="font-size:32px;margin-bottom:12px;">✈️</div>
+            <div style="font-size:15px;font-weight:600;color:var(--text-primary);margin-bottom:6px;">No trips booked</div>
+            <div style="font-size:13px;line-height:1.5;">Time to plan something.</div>
           </div>
-          <div class="m-divider"></div>
+        </div>
 
-          <div class="m-cat-row" onclick="openCategoryDetail('v1','travel')">
-            <div class="m-cat-thumb"><img src="https://picsum.photos/seed/cat-travel/100/100" alt=""></div>
-            <div class="m-cat-info"><h4>Travel</h4><p>45 saves</p></div>
-            <svg class="m-cat-arrow" viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg>
+        <!-- ── LISTING DETAIL SUBPAGE ── -->
+        <div class="m-subpage" id="v1-listing-detail">
+          <div class="v1-detail-photos">
+            <img src="https://picsum.photos/seed/apt-brooklyn/780/520" alt="">
+            <button class="v1-detail-back" onclick="closeSubpage('v1-listing-detail')">
+              <svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg>
+            </button>
           </div>
-          <div class="m-divider"></div>
-
-          <div class="m-cat-row" onclick="openCategoryDetail('v1','building')">
-            <div class="m-cat-thumb"><img src="https://picsum.photos/seed/cat-build/100/100" alt=""></div>
-            <div class="m-cat-info"><h4>Building Materials</h4><p>52 saves</p></div>
-            <svg class="m-cat-arrow" viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg>
-          </div>
-          <div class="m-divider"></div>
-
-          <div class="m-cat-row">
-            <div class="m-cat-thumb"><img src="https://picsum.photos/seed/cat-design/100/100" alt=""></div>
-            <div class="m-cat-info"><h4>Design</h4><p>34 saves</p></div>
-            <svg class="m-cat-arrow" viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg>
-          </div>
-
-          <div style="height:20px"></div>
-        </div><!-- /v1-library -->
-
-        <!-- SEARCH TAB -->
-        <div class="m-page" id="v1-search">
-          <div class="m-header"><h1>Search</h1></div>
-          <div style="padding:0 18px;">
-            <div style="display:flex;align-items:center;gap:9px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-md);padding:11px 14px;">
-              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="var(--text-tertiary)" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.35-4.35"/></svg>
-              <input type="text" placeholder="Search your saves..." style="flex:1;border:none;outline:none;font-family:inherit;font-size:14px;color:var(--text-primary);background:none;">
-            </div>
-          </div>
-          <div style="padding:10px 18px 0;">
-            <div style="font-size:10px;font-weight:600;color:var(--text-tertiary);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:6px;">Filter by intent</div>
-            <div class="m-chips" style="padding-left:0;">
-              <span class="m-chip">buy</span>
-              <span class="m-chip">cook</span>
-              <span class="m-chip">go</span>
-              <span class="m-chip">learn</span>
-              <span class="m-chip">watch</span>
-            </div>
-          </div>
-          <div class="m-section-header"><h3>Recent</h3></div>
-          <div style="padding:0 18px;">
-            <div style="padding:10px 0;border-bottom:1px solid var(--border-subtle);font-size:13px;color:var(--text-secondary);">van solar panel</div>
-            <div style="padding:10px 0;border-bottom:1px solid var(--border-subtle);font-size:13px;color:var(--text-secondary);">vegan breakfast</div>
-            <div style="padding:10px 0;font-size:13px;color:var(--text-secondary);">lisbon restaurants</div>
-          </div>
-        </div><!-- /v1-search -->
-
-        <!-- SUBPAGES (dynamically populated by JS renderers) -->
-        <div class="m-subpage" id="v1-item-detail"></div>
-        <div class="m-subpage" id="v1-category-detail"></div>
-        <div class="m-subpage" id="v1-collection-detail"></div>
-
-        <!-- ADD MODAL -->
-        <div class="add-overlay" id="v1-add-overlay" onclick="closeAdd('v1')">
-          <div class="add-sheet" onclick="event.stopPropagation()">
-            <div class="add-handle"></div>
-            <h3>Save a link</h3>
-            <div class="add-field"><label>URL</label><input type="url" placeholder="Paste a link..."></div>
-            <div class="add-field"><label>Note</label><textarea rows="2" placeholder="Add a comment..."></textarea></div>
-            <div class="add-field"><label>Collection (optional)</label>
-              <div class="m-chips" style="padding:0;margin-top:4px;">
-                <span class="m-chip" onclick="this.classList.toggle('active')">Van Build</span>
-                <span class="m-chip" onclick="this.classList.toggle('active')">Italy Trip</span>
-                <span class="m-chip" onclick="this.classList.toggle('active')">The House</span>
+          <div class="v1-detail-body">
+            <div class="v1-detail-title">Loft in Williamsburg</div>
+            <div class="v1-detail-sub">Brooklyn, New York · ★ 4.92 · 84 reviews</div>
+            <div class="v1-detail-divider"></div>
+            <div class="v1-detail-host">
+              <div class="v1-detail-host-av"><img src="https://picsum.photos/seed/host-sarah/88/88" alt=""></div>
+              <div class="v1-detail-host-info">
+                <h4>Hosted by Sarah</h4>
+                <p>Superhost · 3 years hosting</p>
               </div>
             </div>
-            <button class="add-submit">Save</button>
+            <div class="v1-detail-divider"></div>
+            <div style="font-size:13px;color:var(--text-secondary);line-height:1.6;">A bright, open loft in the heart of Williamsburg. Steps from the L train, surrounded by the best coffee shops, restaurants, and vintage stores Brooklyn has to offer.</div>
+            <div class="v1-detail-divider"></div>
+            <div class="m-section-header" style="padding:0 0 10px;"><h3>What this place offers</h3></div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;font-size:13px;color:var(--text-secondary);">
+              <div>📶 Wifi</div><div>🍳 Kitchen</div>
+              <div>🧺 Washer</div><div>❄️ AC</div>
+              <div>🅿️ Parking</div><div>🐾 Pets OK</div>
+            </div>
+          </div>
+          <!-- Sticky reserve bar -->
+          <div class="v1-reserve-bar">
+            <div>
+              <div class="v1-reserve-price">$185 <span>/ night</span></div>
+              <div style="font-size:11px;color:var(--text-tertiary);">★ 4.92 · 84 reviews</div>
+            </div>
+            <button class="v1-reserve-btn">Reserve</button>
           </div>
         </div>
 
         <!-- TAB BAR -->
         <div class="m-tab-bar">
-          <button class="m-tab active" onclick="switchMTab('v1','home',this)">
-            <svg viewBox="0 0 24 24"><path d="M3 9.5L12 3l9 6.5V20a1 1 0 01-1 1H4a1 1 0 01-1-1V9.5z"/></svg>
-            <span>Home</span>
-          </button>
-          <button class="m-tab" onclick="switchMTab('v1','library',this)">
-            <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
-            <span>Library</span>
-          </button>
-          <button class="m-tab" onclick="switchMTab('v1','search',this)">
+          <button class="m-tab active" onclick="switchMTab('v1','explore',this)">
             <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.35-4.35"/></svg>
-            <span>Search</span>
+            <span>Explore</span>
+          </button>
+          <button class="m-tab" onclick="switchMTab('v1','wishlists',this)">
+            <svg viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg>
+            <span>Wishlists</span>
+          </button>
+          <button class="m-tab" onclick="switchMTab('v1','trips',this)">
+            <svg viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 9.81 19.79 19.79 0 01.4 1.14 2 2 0 012 .84h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L6.09 8.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z"/></svg>
+            <span>Trips</span>
           </button>
         </div>
 
-        <!-- FAB -->
-        <button class="m-fab" onclick="openAdd('v1')">
-          <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-        </button>
-
       </div><!-- /variant-v1 -->
 
-      <!-- ══════════════════════════
-           ADD NEW SCREENS BELOW
-           Copy the variant block above.
-           Change all "v1" to "v2", "v3", etc.
-           Add a matching sidebar-item and sidebar-about block.
-           ══════════════════════════ -->
+      <!-- ══════════════════════════════════════
+           ADD MORE PROTOTYPES BELOW
+           Each .variant is a full prototype.
+           Copy the block above, change all "v1"
+           to "v2", add a sidebar entry to match.
+           ══════════════════════════════════════ -->
 
     </div><!-- /phone-frame -->
   </div><!-- /phone-stage -->
@@ -837,85 +960,15 @@ body { height: 100%; overflow: hidden; }
 
 <script>
 /* ══════════════════════════════════════════════
-   SAMPLE DATA
+   DATA
    ══════════════════════════════════════════════
-   Trimmed to 5 items, 3 categories, 2 collections.
-   Enough to fill a screen. Add more as needed.
+   Add your prototype's data here. These objects
+   are available to the detail renderer helpers.
    ══════════════════════════════════════════════ */
 
-const ITEMS = {
-  'brooklyn-flea': {
-    title: 'Brooklyn Flea & Smorgasburg',
-    source: 'brooklynflea.com',
-    intent: 'go', type: 'event', format: 'link',
-    img: 'bkmarket',
-    comment: 'Let\'s go this Saturday — the vintage section had great stuff last time',
-    mentions: ['Cristina'],
-    collections: [{ name: 'Date Nights', color: '#ec4899' }],
-    category: 'Travel', savedBy: 'Mark', date: 'Feb 18, 2026'
-  },
-  'renogy': {
-    title: 'Renogy 200W Solar Kit',
-    source: 'renogy.com',
-    intent: 'buy', type: 'product', format: 'link',
-    img: 'solarpanel7',
-    comment: 'Chris from the forum recommended this one — 200W should be enough for our setup',
-    mentions: [],
-    collections: [{ name: 'Van Build', color: '#3b82f6' }],
-    category: 'Building Materials', savedBy: 'Mark', date: 'Feb 20, 2026'
-  },
-  'white-bean': {
-    title: 'White Bean & Roasted Garlic Stew',
-    source: 'minimalistbaker.com',
-    intent: 'cook', type: 'recipe', format: 'link',
-    img: 'vegstew',
-    comment: 'Perfect for cold nights — Cristina loved the last batch',
-    mentions: ['Cristina'],
-    collections: [],
-    category: 'Recipes', savedBy: 'Cristina', date: 'Feb 24, 2026'
-  },
-  'douro': {
-    title: 'Douro Valley Wine Route',
-    source: 'visitportugal.com',
-    intent: 'go', type: 'place', format: 'link',
-    img: 'portowine',
-    comment: 'For the Portugal leg of the trip',
-    mentions: [],
-    collections: [{ name: 'Italy Trip', color: '#f59e0b' }],
-    category: 'Travel', savedBy: 'Mark', date: 'Aug 3, 2025'
-  },
-  'pancakes': {
-    title: 'Fluffy Vegan Blueberry Pancakes',
-    source: 'rainbowplantlife.com',
-    intent: 'cook', type: 'recipe', format: 'link',
-    img: 'pancake26',
-    comment: 'Cristina we have to make these this weekend',
-    mentions: ['Cristina'],
-    collections: [],
-    category: 'Recipes', savedBy: 'Mark', date: 'Feb 15, 2026'
-  },
-  'noguchi': {
-    title: 'Noguchi Akari Floor Lamp',
-    source: 'dwr.com',
-    intent: 'buy', type: 'product', format: 'link',
-    img: 'blacklamp',
-    comment: 'For the living room corner',
-    mentions: [],
-    collections: [{ name: 'The House', color: '#10b981' }],
-    category: 'Design', savedBy: 'Mark', date: 'Jul 15, 2025'
-  },
-};
-
-const CATEGORIES = {
-  'recipes':  { name: 'Recipes',            count: 68, img: 'cat-recipe', subs: ['Soups', 'Mains', 'Breakfast'],          items: ['white-bean', 'pancakes'] },
-  'travel':   { name: 'Travel',             count: 45, img: 'cat-travel', subs: ['Portugal', 'Italy', 'NYC'],              items: ['brooklyn-flea', 'douro'] },
-  'building': { name: 'Building Materials', count: 52, img: 'cat-build',  subs: ['Solar', 'Insulation', 'Wood'],           items: ['renogy'] },
-};
-
-const COLLECTIONS = {
-  'van-build':  { name: 'Van Build',  color: '#3b82f6', count: 47, items: ['renogy'] },
-  'italy-trip': { name: 'Italy Trip', color: '#f59e0b', count: 23, items: ['douro'] },
-};
+const ITEMS = {};       // { key: { title, source, intent, type, format, img, comment, mentions, collections, category, savedBy, date } }
+const CATEGORIES = {};  // { key: { name, count, img, subs: [], items: [] } }
+const COLLECTIONS = {}; // { key: { name, color, count, items: [] } }
 
 
 /* ══════════════════════════════════════════════
@@ -963,6 +1016,22 @@ function switchVariant(id, el) {
   if (about) about.style.display = 'block';
 }
 
+/* switchVariantTab — used when the tab bar spans across multiple variant screens
+   (e.g. a shared tab bar that navigates between v1/v2/v3 as separate "tabs").
+   el = the tab button clicked. */
+function switchVariantTab(id, el) {
+  document.querySelectorAll('.variant').forEach(v => v.classList.remove('active'));
+  document.getElementById('variant-' + id).classList.add('active');
+  // Sync sidebar
+  document.querySelectorAll('.sidebar-item').forEach(s => s.classList.remove('active'));
+  const sidebarItem = document.querySelector(`.sidebar-item[onclick*="'${id}'"]`);
+  if (sidebarItem) sidebarItem.classList.add('active');
+  // Update about panel
+  document.querySelectorAll('[class^="sidebar-about-"]').forEach(a => a.style.display = 'none');
+  const about = document.querySelector('.sidebar-about-' + id);
+  if (about) about.style.display = 'block';
+}
+
 function switchMTab(variant, page, el) {
   // Close any open subpages first
   document.querySelectorAll('#variant-' + variant + ' .m-subpage').forEach(s => s.classList.remove('active'));
@@ -996,6 +1065,11 @@ function closeAdd(variant) { document.getElementById(variant + '-add-overlay').c
 
 function toggleChip(el) {
   el.parentElement.querySelectorAll('.m-chip').forEach(c => c.classList.remove('active'));
+  el.classList.add('active');
+}
+
+function selectCat(el) {
+  el.parentElement.querySelectorAll('.v1-cat-pill').forEach(p => p.classList.remove('active'));
   el.classList.add('active');
 }
 

@@ -1,0 +1,492 @@
+<!--
+═══════════════════════════════════════════════════════════════════
+  APPBOARD — BLANK TEMPLATE
+  Duplicate this file for each new project. See SPEC.md and
+  LLMCONTEXT.md for the full component reference and build guide.
+  See example.html for a working Airbnb-like prototype.
+═══════════════════════════════════════════════════════════════════
+
+  MENTAL MODEL
+  • This file = one project
+  • Sidebar entry = one prototype (an idea to explore)
+  • Inside each prototype = however many screens the idea needs
+
+  TO ADD A PROTOTYPE
+  1. Add .sidebar-item with onclick="switchVariant('v1', this)"
+  2. Add .sidebar-about-v1 block in the about panel
+  3. Add <div class="variant active" id="variant-v1"> in .phone-frame
+  4. Add variant CSS prefixed .v1- in the marked section below
+
+  KEY RULES
+  • Page ids: {variant}-{pagename}  e.g. v1-home
+  • Subpage ids: {variant}-{name}   e.g. v1-detail
+  • End every .m-h-scroll with <div class="m-h-scroll-end"></div>
+  • End every .m-page with <div style="height:20px"></div>
+    (or height:100px if a FAB or sticky bar is present)
+  • Prefix all variant CSS with the variant id: .v1-card, .v2-hero
+
+  NAVIGATION
+  switchVariant('v1', el)       — activate prototype from sidebar
+  switchMTab('v1', 'home', el)  — switch tab within a prototype
+  openSubpage('v1-detail')      — slide in a subpage
+  closeSubpage('v1-detail')     — slide back out
+
+  SHARED COMPONENTS (.m-*)
+  Layout:   .m-page  .m-subpage  .m-tab-bar  .m-tab  .m-fab
+  Headers:  .m-header  .m-back-header  .m-section-header  .m-label
+  Lists:    .m-item-row  .m-cat-row  .m-col-card
+  Scroll:   .m-h-scroll + .m-h-scroll-end  .m-chips  .m-chip
+  Misc:     .m-divider  .m-source  .m-avatar  .m-intent[data-i="…"]
+  Animate:  class="stagger" on any flex container
+
+  FULL REFERENCE → SPEC.md  |  BUILD GUIDE → LLMCONTEXT.md
+═══════════════════════════════════════════════════════════════════
+-->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AppBoard — [Project Name]</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+
+/* ══════════════════════════════════════════════
+   RESET
+   ══════════════════════════════════════════════ */
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+/* ══════════════════════════════════════════════
+   DESIGN TOKENS
+   ══════════════════════════════════════════════ */
+:root {
+  --bg:             #fafafa;
+  --surface:        #ffffff;
+  --text-primary:   #18181b;
+  --text-secondary: #71717a;
+  --text-tertiary:  #a1a1aa;
+  --border:         #e4e4e7;
+  --border-subtle:  #f4f4f5;
+  --accent:         #059669;  /* change to your brand color */
+  --accent-soft:    #ecfdf5;
+  --accent-text:    #047857;
+  --sidebar-bg:     #ffffff;
+  --sidebar-w:      240px;
+  --phone-w:        390px;
+  --phone-h:        844px;
+  --radius-sm:      8px;
+  --radius-md:      14px;
+  --radius-lg:      20px;
+  --radius-xl:      28px;
+  --transition-fast: 180ms cubic-bezier(0.16, 1, 0.3, 1);
+  --transition-med:  320ms cubic-bezier(0.16, 1, 0.3, 1);
+  --tab-bar-h:      80px;
+}
+
+/* ══════════════════════════════════════════════
+   DESKTOP SHELL
+   ══════════════════════════════════════════════ */
+html {
+  font-family: 'Outfit', system-ui, sans-serif;
+  background: #f0f0f0;
+  color: var(--text-primary);
+  -webkit-font-smoothing: antialiased;
+  height: 100%;
+}
+body { height: 100%; overflow: hidden; }
+
+.desktop-shell { display: flex; height: 100%; }
+
+/* ── Sidebar ── */
+.sidebar {
+  width: var(--sidebar-w);
+  background: var(--sidebar-bg);
+  border-right: 1px solid var(--border);
+  display: flex; flex-direction: column;
+  flex-shrink: 0; padding: 24px 0; overflow-y: auto;
+}
+.sidebar-logo { padding: 0 20px 24px; font-size: 18px; font-weight: 700; letter-spacing: -0.03em; }
+.sidebar-section { padding: 0 12px; margin-bottom: 8px; }
+.sidebar-section-label { font-size: 10px; font-weight: 600; color: var(--text-tertiary); text-transform: uppercase; letter-spacing: 0.08em; padding: 0 8px 8px; }
+.sidebar-item { display: flex; align-items: center; gap: 10px; padding: 9px 12px; border-radius: 8px; cursor: pointer; font-size: 13px; font-weight: 500; color: var(--text-secondary); transition: all var(--transition-fast); -webkit-user-select: none; }
+.sidebar-item:hover { background: var(--border-subtle); color: var(--text-primary); }
+.sidebar-item.active { background: var(--text-primary); color: white; }
+.sidebar-item-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+.sidebar-about { margin-top: auto; padding-top: 16px; border-top: 1px solid var(--border-subtle); }
+
+/* ── Phone Stage + Frame ── */
+.phone-stage { flex: 1; display: flex; align-items: center; justify-content: center; padding: 24px; }
+.phone-frame {
+  width: var(--phone-w); height: var(--phone-h);
+  background: var(--bg); border-radius: 44px;
+  box-shadow: 0 0 0 10px #1d1d1f, 0 20px 60px rgba(0,0,0,0.2), 0 0 0 11px rgba(255,255,255,0.1);
+  overflow: hidden; position: relative;
+}
+.variant { display: none; width: 100%; height: 100%; position: relative; }
+.variant.active { display: block; }
+
+
+/* ══════════════════════════════════════════════
+   SHARED MOBILE COMPONENTS
+   ══════════════════════════════════════════════ */
+
+/* Pages */
+.m-page { position: absolute; inset: 0; bottom: var(--tab-bar-h); overflow-y: auto; overflow-x: hidden; -webkit-overflow-scrolling: touch; opacity: 0; pointer-events: none; transform: translateY(6px); transition: opacity var(--transition-med), transform var(--transition-med); background: var(--bg); }
+.m-page.active { opacity: 1; pointer-events: auto; transform: translateY(0); }
+
+/* Subpages */
+.m-subpage { position: absolute; inset: 0; overflow-y: auto; overflow-x: hidden; -webkit-overflow-scrolling: touch; background: var(--bg); z-index: 100; opacity: 0; pointer-events: none; transform: translateX(30px); transition: opacity var(--transition-med), transform var(--transition-med); }
+.m-subpage.active { opacity: 1; pointer-events: auto; transform: translateX(0); }
+
+/* Tab bar */
+.m-tab-bar { position: absolute; bottom: 0; left: 0; right: 0; height: var(--tab-bar-h); background: rgba(255,255,255,0.92); backdrop-filter: blur(20px) saturate(180%); -webkit-backdrop-filter: blur(20px) saturate(180%); border-top: 1px solid var(--border-subtle); display: flex; align-items: flex-start; justify-content: space-around; padding-top: 10px; z-index: 200; }
+.m-tab { display: flex; flex-direction: column; align-items: center; gap: 3px; background: none; border: none; cursor: pointer; padding: 4px 14px; -webkit-tap-highlight-color: transparent; }
+.m-tab svg { width: 22px; height: 22px; stroke: var(--text-tertiary); stroke-width: 1.8; fill: none; transition: stroke var(--transition-fast); }
+.m-tab span { font-size: 10px; font-weight: 500; color: var(--text-tertiary); transition: color var(--transition-fast); }
+.m-tab.active svg { stroke: var(--text-primary); }
+.m-tab.active span { color: var(--text-primary); }
+
+/* FAB */
+.m-fab { position: absolute; bottom: calc(var(--tab-bar-h) + 12px); right: 16px; width: 48px; height: 48px; border-radius: 50%; background: var(--text-primary); border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 16px rgba(0,0,0,0.2); z-index: 150; transition: transform var(--transition-fast); }
+.m-fab:active { transform: scale(0.92); }
+.m-fab svg { width: 20px; height: 20px; stroke: white; stroke-width: 2.2; fill: none; }
+
+/* Headers */
+.m-header { padding: 52px 18px 14px; display: flex; align-items: center; justify-content: space-between; }
+.m-header h1 { font-size: 26px; font-weight: 700; letter-spacing: -0.03em; line-height: 1; }
+.m-avatar { width: 30px; height: 30px; border-radius: 50%; background: linear-gradient(135deg, #d4d4d8, #a1a1aa); display: flex; align-items: center; justify-content: center; }
+.m-avatar span { font-size: 12px; font-weight: 600; color: white; }
+.m-back-header { padding: 52px 18px 10px; display: flex; align-items: center; gap: 8px; }
+.m-back-btn { background: none; border: none; cursor: pointer; padding: 4px; margin-left: -4px; display: flex; align-items: center; }
+.m-back-btn svg { width: 20px; height: 20px; stroke: var(--text-primary); stroke-width: 2; fill: none; }
+.m-back-header h2 { font-size: 18px; font-weight: 600; letter-spacing: -0.02em; }
+.m-section-header { padding: 22px 18px 10px; display: flex; align-items: baseline; justify-content: space-between; }
+.m-section-header h3 { font-size: 16px; font-weight: 600; letter-spacing: -0.01em; }
+.m-section-link { font-size: 12px; font-weight: 500; color: var(--accent-text); background: none; border: none; cursor: pointer; }
+.m-label { padding: 24px 18px 8px; font-size: 11px; font-weight: 600; color: var(--text-tertiary); text-transform: uppercase; letter-spacing: 0.06em; }
+
+/* Chips */
+.m-chips { display: flex; gap: 7px; overflow-x: auto; padding: 0 18px 10px; -ms-overflow-style: none; scrollbar-width: none; }
+.m-chips::-webkit-scrollbar { display: none; }
+.m-chip { flex-shrink: 0; padding: 5px 12px; border-radius: 18px; font-size: 12px; font-weight: 500; background: var(--surface); color: var(--text-secondary); border: 1px solid var(--border); cursor: pointer; white-space: nowrap; transition: all var(--transition-fast); }
+.m-chip.active { background: var(--text-primary); color: white; border-color: var(--text-primary); }
+
+/* Horizontal scroll */
+.m-h-scroll { display: flex; gap: 10px; overflow-x: auto; padding: 0 18px 4px; scroll-snap-type: x proximity; -ms-overflow-style: none; scrollbar-width: none; }
+.m-h-scroll::-webkit-scrollbar { display: none; }
+.m-h-scroll-end { flex: 0 0 18px; min-width: 18px; } /* always add as last child — fixes trailing bleed */
+
+/* Divider + source */
+.m-divider { height: 1px; background: var(--border-subtle); margin: 0 18px; }
+.m-source { font-size: 10px; color: var(--text-tertiary); }
+
+/* Intent badges — 14 types */
+.m-intent { display: inline-flex; padding: 2px 7px; border-radius: 5px; font-size: 10px; font-weight: 600; letter-spacing: 0.02em; text-transform: lowercase; }
+.m-intent[data-i="buy"]     { background: #fef3c7; color: #92400e; }
+.m-intent[data-i="cook"]    { background: #fee2e2; color: #991b1b; }
+.m-intent[data-i="go"]      { background: #dbeafe; color: #1e40af; }
+.m-intent[data-i="create"]  { background: #ede9fe; color: #5b21b6; }
+.m-intent[data-i="eat"]     { background: #ffedd5; color: #9a3412; }
+.m-intent[data-i="read"]    { background: #e0e7ff; color: #3730a3; }
+.m-intent[data-i="watch"]   { background: #fce7f3; color: #9d174d; }
+.m-intent[data-i="listen"]  { background: #ccfbf1; color: #115e59; }
+.m-intent[data-i="do"]      { background: #d1fae5; color: #065f46; }
+.m-intent[data-i="learn"]   { background: #e0f2fe; color: #075985; }
+.m-intent[data-i="hire"]    { background: #f1f5f9; color: #334155; }
+.m-intent[data-i="book"]    { background: #f3e8ff; color: #6b21a8; }
+.m-intent[data-i="gift"]    { background: #ffe4e6; color: #9f1239; }
+.m-intent[data-i="inspire"] { background: #fae8ff; color: #86198f; }
+
+/* Item row */
+.m-item-row { display: flex; gap: 12px; padding: 12px 18px; cursor: pointer; transition: background var(--transition-fast); }
+.m-item-row:active { background: var(--border-subtle); }
+.m-item-img { width: 64px; height: 64px; border-radius: 6px; background: var(--border-subtle); overflow: hidden; flex-shrink: 0; }
+.m-item-img img { width: 100%; height: 100%; object-fit: cover; }
+.m-item-body { flex: 1; min-width: 0; display: flex; flex-direction: column; justify-content: center; gap: 4px; }
+.m-item-body h4 { font-size: 13px; font-weight: 600; letter-spacing: -0.01em; line-height: 1.3; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.m-item-meta { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+
+/* Category row */
+.m-cat-row { display: flex; align-items: center; gap: 12px; padding: 12px 18px; cursor: pointer; transition: background var(--transition-fast); }
+.m-cat-row:active { background: var(--border-subtle); }
+.m-cat-thumb { width: 50px; height: 50px; border-radius: var(--radius-sm); background: var(--border-subtle); overflow: hidden; flex-shrink: 0; }
+.m-cat-thumb img { width: 100%; height: 100%; object-fit: cover; }
+.m-cat-info { flex: 1; min-width: 0; }
+.m-cat-info h4 { font-size: 14px; font-weight: 600; letter-spacing: -0.01em; margin-bottom: 1px; }
+.m-cat-info p { font-size: 12px; color: var(--text-secondary); }
+.m-cat-arrow { width: 16px; height: 16px; stroke: var(--text-tertiary); stroke-width: 2; fill: none; }
+
+/* Collection card */
+.m-col-card { flex: 0 0 136px; scroll-snap-align: start; background: var(--surface); border-radius: var(--radius-md); padding: 14px; border: 1px solid var(--border-subtle); cursor: pointer; transition: transform var(--transition-fast); }
+.m-col-card:active { transform: scale(0.96); }
+.m-col-dot { width: 7px; height: 7px; border-radius: 50%; margin-bottom: 10px; }
+.m-col-card h4 { font-size: 13px; font-weight: 600; letter-spacing: -0.01em; margin-bottom: 3px; line-height: 1.2; }
+.m-col-card p { font-size: 11px; color: var(--text-tertiary); }
+
+/* Stagger animation — add class="stagger" to any flex container */
+@keyframes fadeUp { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+.stagger > * { opacity: 0; animation: fadeUp 350ms cubic-bezier(0.16,1,0.3,1) forwards; }
+.stagger > *:nth-child(1) { animation-delay:   0ms; }
+.stagger > *:nth-child(2) { animation-delay:  50ms; }
+.stagger > *:nth-child(3) { animation-delay: 100ms; }
+.stagger > *:nth-child(4) { animation-delay: 150ms; }
+.stagger > *:nth-child(5) { animation-delay: 200ms; }
+.stagger > *:nth-child(6) { animation-delay: 250ms; }
+.stagger > *:nth-child(7) { animation-delay: 300ms; }
+.stagger > *:nth-child(8) { animation-delay: 350ms; }
+
+/* Detail page styles */
+.detail-hero { width: 100%; height: 200px; background: var(--border-subtle); overflow: hidden; position: relative; }
+.detail-hero img { width: 100%; height: 100%; object-fit: cover; }
+.detail-hero-back { position: absolute; top: 48px; left: 14px; width: 32px; height: 32px; border-radius: 50%; background: rgba(255,255,255,0.85); backdrop-filter: blur(8px); border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; z-index: 10; transition: transform var(--transition-fast); }
+.detail-hero-back:active { transform: scale(0.9); }
+.detail-hero-back svg { width: 18px; height: 18px; stroke: var(--text-primary); stroke-width: 2; fill: none; }
+.detail-body { padding: 16px 18px 40px; }
+.detail-title { font-size: 20px; font-weight: 700; letter-spacing: -0.02em; line-height: 1.2; margin-bottom: 10px; }
+.detail-meta-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 14px; }
+.detail-cta { display: inline-flex; align-items: center; gap: 7px; padding: 10px 20px; border-radius: 10px; background: var(--text-primary); color: white; border: none; cursor: pointer; font-family: inherit; font-size: 14px; font-weight: 600; letter-spacing: -0.01em; transition: transform var(--transition-fast); margin-bottom: 18px; }
+.detail-cta:active { transform: scale(0.96); }
+.detail-cta svg { width: 16px; height: 16px; stroke: currentColor; stroke-width: 2; fill: none; }
+.detail-comment { padding: 12px 14px; background: var(--border-subtle); border-radius: var(--radius-sm); margin-bottom: 18px; font-size: 13px; color: var(--text-secondary); line-height: 1.4; font-style: italic; }
+.detail-comment .mention { color: var(--accent-text); font-weight: 600; font-style: normal; cursor: pointer; }
+.detail-section-label { font-size: 10px; font-weight: 600; color: var(--text-tertiary); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 8px; }
+.detail-meta-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 18px; }
+.detail-meta-cell { padding: 10px 12px; background: var(--surface); border: 1px solid var(--border-subtle); border-radius: var(--radius-sm); }
+.detail-meta-cell dt { font-size: 10px; font-weight: 600; color: var(--text-tertiary); text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 2px; }
+.detail-meta-cell dd { font-size: 13px; font-weight: 500; color: var(--text-primary); }
+.detail-collections { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 18px; }
+.detail-col-tag { display: inline-flex; align-items: center; gap: 5px; padding: 5px 10px; border-radius: 14px; background: var(--surface); border: 1px solid var(--border); font-size: 11px; font-weight: 600; color: var(--text-secondary); cursor: pointer; transition: all var(--transition-fast); }
+.detail-col-tag:active { transform: scale(0.95); }
+.detail-col-tag .dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+.list-detail-header { padding: 52px 18px 8px; display: flex; align-items: center; gap: 8px; }
+.list-detail-header .m-back-btn { background: none; border: none; cursor: pointer; padding: 4px; margin-left: -4px; display: flex; align-items: center; }
+.list-detail-header .m-back-btn svg { width: 20px; height: 20px; stroke: var(--text-primary); stroke-width: 2; fill: none; }
+.list-detail-title { flex: 1; }
+.list-detail-title h2 { font-size: 20px; font-weight: 700; letter-spacing: -0.02em; line-height: 1; }
+.list-detail-title p { font-size: 12px; color: var(--text-secondary); margin-top: 3px; }
+.list-detail-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+
+/* Add modal */
+.add-overlay { position: absolute; inset: 0; background: rgba(0,0,0,0.35); z-index: 300; opacity: 0; pointer-events: none; transition: opacity var(--transition-med); }
+.add-overlay.active { opacity: 1; pointer-events: auto; }
+.add-sheet { position: absolute; bottom: 0; left: 0; right: 0; z-index: 310; background: var(--surface); border-radius: var(--radius-xl) var(--radius-xl) 0 0; padding: 16px 18px 32px; transform: translateY(100%); transition: transform var(--transition-med); }
+.add-overlay.active .add-sheet { transform: translateY(0); }
+.add-handle { width: 32px; height: 4px; border-radius: 2px; background: var(--border); margin: 0 auto 16px; }
+.add-sheet h3 { font-size: 17px; font-weight: 700; letter-spacing: -0.02em; margin-bottom: 16px; }
+.add-field { margin-bottom: 14px; }
+.add-field label { display: block; font-size: 11px; font-weight: 600; color: var(--text-tertiary); text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 5px; }
+.add-field input, .add-field textarea { width: 100%; padding: 10px 12px; border: 1px solid var(--border); border-radius: var(--radius-sm); font-family: inherit; font-size: 13px; color: var(--text-primary); background: var(--bg); outline: none; transition: border-color var(--transition-fast); resize: none; }
+.add-field input:focus, .add-field textarea:focus { border-color: var(--accent); }
+.add-submit { width: 100%; padding: 12px; border-radius: 10px; background: var(--text-primary); color: white; border: none; cursor: pointer; font-family: inherit; font-size: 14px; font-weight: 600; transition: transform var(--transition-fast); }
+.add-submit:active { transform: scale(0.97); }
+
+
+/* ══════════════════════════════════════════════
+   VARIANT-SPECIFIC STYLES — ADD YOURS HERE
+   Prefix all classes with variant id: .v1-, .v2-
+   ══════════════════════════════════════════════ */
+
+
+
+</style>
+</head>
+
+<body>
+<div class="desktop-shell">
+
+  <!-- ═══════ SIDEBAR ═══════ -->
+  <div class="sidebar">
+    <div class="sidebar-logo">[Project Name]</div>
+
+    <div class="sidebar-section">
+      <div class="sidebar-section-label">Prototypes</div>
+
+      <!-- Add one entry per prototype -->
+      <div class="sidebar-item active" onclick="switchVariant('v1', this)">
+        <div class="sidebar-item-dot" style="background: var(--accent)"></div>
+        Prototype A
+      </div>
+
+      <!-- Copy for additional prototypes:
+      <div class="sidebar-item" onclick="switchVariant('v2', this)">
+        <div class="sidebar-item-dot" style="background: #3b82f6"></div>
+        Prototype B
+      </div>
+      -->
+    </div>
+
+    <!-- About panel — one block per prototype -->
+    <div class="sidebar-section sidebar-about">
+      <div class="sidebar-about-v1">
+        <div class="sidebar-section-label">About</div>
+        <div style="padding:0 8px; font-size:11px; color:var(--text-secondary); line-height:1.5;">
+          Describe what this prototype is exploring.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════ PHONE STAGE ═══════ -->
+  <div class="phone-stage">
+    <div class="phone-frame">
+
+      <!-- ══════════════════════════════════════
+           PROTOTYPE v1
+           Each .variant is one complete prototype.
+           Inside it: .m-page tabs, .m-subpage
+           drill-ins, .m-tab-bar, .m-fab.
+           ══════════════════════════════════════ -->
+      <div class="variant active" id="variant-v1">
+
+        <!-- HOME PAGE -->
+        <div class="m-page active" id="v1-home">
+
+          <div class="m-header">
+            <h1>Home</h1>
+          </div>
+
+          <!-- Build your prototype here.
+               Use .m-* components from the shared library.
+               See example.html for a working reference.
+               See SPEC.md for all component patterns.  -->
+
+          <div style="height:20px"></div>
+        </div><!-- /v1-home -->
+
+        <!-- ADD MORE PAGES HERE:
+        <div class="m-page" id="v1-detail"> ... </div>
+        -->
+
+        <!-- ADD SUBPAGES HERE:
+        <div class="m-subpage" id="v1-item-detail"></div>
+        -->
+
+        <!-- TAB BAR (optional — remove if not needed) -->
+        <div class="m-tab-bar">
+          <button class="m-tab active" onclick="switchMTab('v1','home',this)">
+            <svg viewBox="0 0 24 24"><path d="M3 9.5L12 3l9 6.5V20a1 1 0 01-1 1H4a1 1 0 01-1-1V9.5z"/></svg>
+            <span>Home</span>
+          </button>
+          <!-- Add more tabs as needed -->
+        </div>
+
+      </div><!-- /variant-v1 -->
+
+      <!-- Add more prototypes below.
+           Copy the variant block, change v1 → v2 everywhere,
+           add a matching sidebar-item and sidebar-about-v2. -->
+
+    </div><!-- /phone-frame -->
+  </div><!-- /phone-stage -->
+</div><!-- /desktop-shell -->
+
+
+<script>
+/* ══════════════════════════════════════════════
+   DATA (optional — for content-heavy prototypes)
+   ══════════════════════════════════════════════ */
+const ITEMS = {};       // { key: { title, source, intent, type, format, img, comment, mentions, collections, category, savedBy, date } }
+const CATEGORIES = {};  // { key: { name, count, img, subs: [], items: [] } }
+const COLLECTIONS = {}; // { key: { name, color, count, items: [] } }
+
+
+/* ══════════════════════════════════════════════
+   NAVIGATION
+   ══════════════════════════════════════════════ */
+
+function switchVariant(id, el) {
+  document.querySelectorAll('.variant').forEach(v => v.classList.remove('active'));
+  document.getElementById('variant-' + id).classList.add('active');
+  document.querySelectorAll('.sidebar-item').forEach(s => s.classList.remove('active'));
+  el.classList.add('active');
+  document.querySelectorAll('[class^="sidebar-about-"]').forEach(a => a.style.display = 'none');
+  const about = document.querySelector('.sidebar-about-' + id);
+  if (about) about.style.display = 'block';
+}
+
+function switchMTab(variant, page, el) {
+  document.querySelectorAll('#variant-' + variant + ' .m-subpage').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('#variant-' + variant + ' .m-page').forEach(p => p.classList.remove('active'));
+  document.getElementById(variant + '-' + page).classList.add('active');
+  el.closest('.m-tab-bar').querySelectorAll('.m-tab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+}
+
+function openSubpage(id)  { document.getElementById(id).classList.add('active'); }
+function closeSubpage(id) { document.getElementById(id).classList.remove('active'); }
+function openAdd(variant)  { document.getElementById(variant + '-add-overlay').classList.add('active'); }
+function closeAdd(variant) { document.getElementById(variant + '-add-overlay').classList.remove('active'); }
+function toggleChip(el) {
+  el.parentElement.querySelectorAll('.m-chip').forEach(c => c.classList.remove('active'));
+  el.classList.add('active');
+}
+
+
+/* ══════════════════════════════════════════════
+   DETAIL RENDERERS (optional)
+   Populate ITEMS/CATEGORIES/COLLECTIONS above,
+   add <div class="m-subpage" id="v1-item-detail">
+   inside your variant, then call these functions.
+   ══════════════════════════════════════════════ */
+
+function openItemDetail(variant, itemKey) {
+  const item = ITEMS[itemKey]; if (!item) return;
+  const id = variant + '-item-detail';
+  const el = document.getElementById(id); if (!el) return;
+  const commentHTML = item.comment ? `<div class="detail-comment">"${item.comment}"</div>` : '';
+  const collectionsHTML = item.collections && item.collections.length
+    ? `<div class="detail-section-label">Collections</div><div class="detail-collections">${item.collections.map(c => `<span class="detail-col-tag"><span class="dot" style="background:${c.color}"></span>${c.name}</span>`).join('')}</div>`
+    : '';
+  el.innerHTML = `
+    <div class="detail-hero">
+      <img src="https://picsum.photos/seed/${item.img}/780/400" alt="">
+      <button class="detail-hero-back" onclick="closeSubpage('${id}')"><svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg></button>
+    </div>
+    <div class="detail-body">
+      <div class="detail-title">${item.title}</div>
+      <div class="detail-meta-row"><span class="m-intent" data-i="${item.intent}">${item.intent}</span><span class="m-source">${item.source}</span></div>
+      ${commentHTML}
+      <div class="detail-section-label">Details</div>
+      <div class="detail-meta-grid">
+        <div class="detail-meta-cell"><dt>Saved by</dt><dd>${item.savedBy || '—'}</dd></div>
+        <div class="detail-meta-cell"><dt>Date</dt><dd>${item.date || '—'}</dd></div>
+        <div class="detail-meta-cell"><dt>Category</dt><dd>${item.category || '—'}</dd></div>
+        <div class="detail-meta-cell"><dt>Intent</dt><dd>${item.intent}</dd></div>
+      </div>
+      ${collectionsHTML}
+    </div>`;
+  openSubpage(id);
+}
+
+function openCategoryDetail(variant, catKey) {
+  const cat = CATEGORIES[catKey]; if (!cat) return;
+  const id = variant + '-category-detail';
+  const el = document.getElementById(id); if (!el) return;
+  const subsHTML = cat.subs && cat.subs.length
+    ? `<div class="m-chips" style="padding-left:18px;padding-right:18px;padding-bottom:6px;"><span class="m-chip active">All</span>${cat.subs.map(s => `<span class="m-chip" onclick="toggleChip(this)">${s}</span>`).join('')}</div>`
+    : '';
+  const itemsHTML = (cat.items || []).map(key => {
+    const it = ITEMS[key]; if (!it) return '';
+    return `<div class="m-item-row" onclick="openItemDetail('${variant}','${key}')"><div class="m-item-img"><img src="https://picsum.photos/seed/${it.img}/128/128" alt=""></div><div class="m-item-body"><h4>${it.title}</h4><div class="m-item-meta"><span class="m-intent" data-i="${it.intent}">${it.intent}</span><span class="m-source">${it.source}</span></div></div></div><div class="m-divider"></div>`;
+  }).join('');
+  el.innerHTML = `<div class="list-detail-header"><button class="m-back-btn" onclick="closeSubpage('${id}')"><svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg></button><div class="list-detail-title"><h2>${cat.name}</h2><p>${cat.count} items</p></div></div>${subsHTML}${itemsHTML || '<div style="padding:40px 18px;text-align:center;color:var(--text-tertiary);font-size:13px;">No items yet</div>'}`;
+  openSubpage(id);
+}
+
+function openCollectionDetail(variant, colKey) {
+  const col = COLLECTIONS[colKey]; if (!col) return;
+  const id = variant + '-collection-detail';
+  const el = document.getElementById(id); if (!el) return;
+  const itemsHTML = (col.items || []).map(key => {
+    const it = ITEMS[key]; if (!it) return '';
+    return `<div class="m-item-row" onclick="openItemDetail('${variant}','${key}')"><div class="m-item-img"><img src="https://picsum.photos/seed/${it.img}/128/128" alt=""></div><div class="m-item-body"><h4>${it.title}</h4><div class="m-item-meta"><span class="m-intent" data-i="${it.intent}">${it.intent}</span><span class="m-source">${it.source}</span></div></div></div><div class="m-divider"></div>`;
+  }).join('');
+  el.innerHTML = `<div class="list-detail-header"><button class="m-back-btn" onclick="closeSubpage('${id}')"><svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg></button><div class="list-detail-dot" style="background:${col.color}"></div><div class="list-detail-title"><h2>${col.name}</h2><p>${col.count} items</p></div></div>${itemsHTML || '<div style="padding:40px 18px;text-align:center;color:var(--text-tertiary);font-size:13px;">No items yet</div>'}`;
+  openSubpage(id);
+}
+
+</script>
+</body>
+</html>
