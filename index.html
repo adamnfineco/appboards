@@ -8,28 +8,39 @@
 
   MENTAL MODEL
   • This file = one project
-  • Sidebar entry = one prototype (an idea to explore)
-  • Inside each prototype = however many screens the idea needs
+  • Page     = a distinct scenario / user type / flow (Page 1, Page 2…)
+  • Variant  = a design variation within a page (Variant A, Variant B…)
+  • Inside each variant = however many screens the idea needs
 
-  TO ADD A PROTOTYPE
-  1. Add .sidebar-item with onclick="switchVariant('v1', this)"
-  2. Add .sidebar-about-v1 block in the about panel
-  3. Add <div class="variant active" id="variant-v1"> in .phone-frame
-  4. Add variant CSS prefixed .v1- in the marked section below
+  NAMING SYSTEM
+  • Pages:    Page 1, Page 2 … (auto-numbered)
+  • Variants: Variant A … Variant Z, Variant AA, Variant AB … (spreadsheet-style)
+  • IDs:      page → p1, p2 …   variant → p1vA, p1vB, p2vA …
+
+  TO ADD A PAGE
+  1. Add an <option value="p2"> in #page-select
+  2. Add a <div class="variant-group" id="page-p2"> in the sidebar variants section
+  3. Add variant sidebar items inside it
+  4. Add matching .variant blocks in .phone-frame
+
+  TO ADD A VARIANT (within a page)
+  1. Add a .sidebar-item with onclick="switchVariant('p1vB', this)"
+  2. Add <div class="variant" id="variant-p1vB"> in .phone-frame
+  3. Add variant CSS prefixed .p1vB- in the marked section below
 
   KEY RULES
-  • Page ids: {variant}-{pagename}  e.g. v1-home
-  • Subpage ids: {variant}-{name}   e.g. v1-detail
+  • Page ids: {variant}-{pagename}  e.g. p1vA-home
+  • Subpage ids: {variant}-{name}   e.g. p1vA-detail
   • End every .m-h-scroll with <div class="m-h-scroll-end"></div>
   • End every .m-page with <div style="height:20px"></div>
     (or height:100px if a FAB or sticky bar is present)
-  • Prefix all variant CSS with the variant id: .v1-card, .v2-hero
+  • Prefix all variant CSS with the variant id: .p1vA-card, .p1vB-hero
 
   NAVIGATION
-  switchVariant('v1', el)       — activate prototype from sidebar
-  switchMTab('v1', 'home', el)  — switch tab within a prototype
-  openSubpage('v1-detail')      — slide in a subpage
-  closeSubpage('v1-detail')     — slide back out
+  switchVariant('p1vA', el)          — activate variant from sidebar
+  switchMTab('p1vA', 'home', el)     — switch tab within a variant
+  openSubpage('p1vA-detail')         — slide in a subpage
+  closeSubpage('p1vA-detail')        — slide back out
 
   SHARED COMPONENTS (.m-*)
   Layout:   .m-page  .m-subpage  .m-tab-bar  .m-tab  .m-fab
@@ -107,13 +118,42 @@ body { height: 100%; overflow: hidden; }
   display: flex; flex-direction: column;
   flex-shrink: 0; padding: 24px 0; overflow-y: auto;
 }
-.sidebar-logo { padding: 0 20px 24px; font-size: 18px; font-weight: 700; letter-spacing: -0.03em; }
+.sidebar-logo { padding: 0 20px 20px; font-size: 18px; font-weight: 700; letter-spacing: -0.03em; }
+
+/* Page selector */
+.sidebar-page-selector { padding: 0 12px 16px; }
+.sidebar-page-select {
+  width: 100%;
+  padding: 7px 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-primary);
+  background: var(--bg);
+  cursor: pointer;
+  appearance: none;
+  -webkit-appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2371717a' stroke-width='2.5'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  padding-right: 28px;
+  transition: border-color var(--transition-fast);
+}
+.sidebar-page-select:focus { outline: none; border-color: var(--accent); }
+
 .sidebar-section { padding: 0 12px; margin-bottom: 8px; }
 .sidebar-section-label { font-size: 10px; font-weight: 600; color: var(--text-tertiary); text-transform: uppercase; letter-spacing: 0.08em; padding: 0 8px 8px; }
 .sidebar-item { display: flex; align-items: center; gap: 10px; padding: 9px 12px; border-radius: 8px; cursor: pointer; font-size: 13px; font-weight: 500; color: var(--text-secondary); transition: all var(--transition-fast); -webkit-user-select: none; }
 .sidebar-item:hover { background: var(--border-subtle); color: var(--text-primary); }
 .sidebar-item.active { background: var(--text-primary); color: white; }
 .sidebar-item-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+
+/* Variant groups — one per page */
+.variant-group { display: none; }
+.variant-group.active { display: block; }
+
 .sidebar-about { margin-top: auto; padding-top: 16px; border-top: 1px solid var(--border-subtle); }
 
 /* ── Phone Stage + Frame ── */
@@ -285,7 +325,7 @@ body { height: 100%; overflow: hidden; }
 
 /* ══════════════════════════════════════════════
    VARIANT-SPECIFIC STYLES — ADD YOURS HERE
-   Prefix all classes with variant id: .v1-, .v2-
+   Prefix all classes with variant id: .p1vA-, .p1vB-
    ══════════════════════════════════════════════ */
 
 
@@ -300,29 +340,53 @@ body { height: 100%; overflow: hidden; }
   <div class="sidebar">
     <div class="sidebar-logo">[Project Name]</div>
 
-    <div class="sidebar-section">
-      <div class="sidebar-section-label">Prototypes</div>
-
-      <!-- Add one entry per prototype -->
-      <div class="sidebar-item active" onclick="switchVariant('v1', this)">
-        <div class="sidebar-item-dot" style="background: var(--accent)"></div>
-        Prototype A
-      </div>
-
-      <!-- Copy for additional prototypes:
-      <div class="sidebar-item" onclick="switchVariant('v2', this)">
-        <div class="sidebar-item-dot" style="background: #3b82f6"></div>
-        Prototype B
-      </div>
-      -->
+    <!-- Page selector — one <option> per page -->
+    <div class="sidebar-page-selector">
+      <select id="page-select" class="sidebar-page-select" onchange="switchPage(this.value)">
+        <option value="p1">Page 1</option>
+        <!-- Add more pages:
+        <option value="p2">Page 2</option>
+        -->
+      </select>
     </div>
 
-    <!-- About panel — one block per prototype -->
+    <!-- Variants for Page 1 -->
+    <div class="variant-group active" id="page-p1">
+      <div class="sidebar-section">
+        <div class="sidebar-section-label">Variants</div>
+
+        <div class="sidebar-item active" onclick="switchVariant('p1vA', this)">
+          <div class="sidebar-item-dot" style="background: var(--accent)"></div>
+          Variant A
+        </div>
+
+        <!-- Copy for additional variants within this page:
+        <div class="sidebar-item" onclick="switchVariant('p1vB', this)">
+          <div class="sidebar-item-dot" style="background: #3b82f6"></div>
+          Variant B
+        </div>
+        -->
+      </div>
+    </div>
+
+    <!-- Variants for Page 2 (example — uncomment to use):
+    <div class="variant-group" id="page-p2">
+      <div class="sidebar-section">
+        <div class="sidebar-section-label">Variants</div>
+        <div class="sidebar-item active" onclick="switchVariant('p2vA', this)">
+          <div class="sidebar-item-dot" style="background: var(--accent)"></div>
+          Variant A
+        </div>
+      </div>
+    </div>
+    -->
+
+    <!-- About panel -->
     <div class="sidebar-section sidebar-about">
-      <div class="sidebar-about-v1">
+      <div class="sidebar-about-p1vA">
         <div class="sidebar-section-label">About</div>
         <div style="padding:0 8px; font-size:11px; color:var(--text-secondary); line-height:1.5;">
-          Describe what this prototype is exploring.
+          Describe what this variant is exploring.
         </div>
       </div>
     </div>
@@ -333,15 +397,15 @@ body { height: 100%; overflow: hidden; }
     <div class="phone-frame">
 
       <!-- ══════════════════════════════════════
-           PROTOTYPE v1
+           PAGE 1 / VARIANT A
            Each .variant is one complete prototype.
            Inside it: .m-page tabs, .m-subpage
            drill-ins, .m-tab-bar, .m-fab.
            ══════════════════════════════════════ -->
-      <div class="variant active" id="variant-v1">
+      <div class="variant active" id="variant-p1vA">
 
         <!-- HOME PAGE -->
-        <div class="m-page active" id="v1-home">
+        <div class="m-page active" id="p1vA-home">
 
           <div class="m-header">
             <h1>Home</h1>
@@ -353,30 +417,41 @@ body { height: 100%; overflow: hidden; }
                See SPEC.md for all component patterns.  -->
 
           <div style="height:20px"></div>
-        </div><!-- /v1-home -->
+        </div><!-- /p1vA-home -->
 
         <!-- ADD MORE PAGES HERE:
-        <div class="m-page" id="v1-detail"> ... </div>
+        <div class="m-page" id="p1vA-explore"> ... </div>
         -->
 
         <!-- ADD SUBPAGES HERE:
-        <div class="m-subpage" id="v1-item-detail"></div>
+        <div class="m-subpage" id="p1vA-item-detail"></div>
         -->
 
         <!-- TAB BAR (optional — remove if not needed) -->
         <div class="m-tab-bar">
-          <button class="m-tab active" onclick="switchMTab('v1','home',this)">
+          <button class="m-tab active" onclick="switchMTab('p1vA','home',this)">
             <svg viewBox="0 0 24 24"><path d="M3 9.5L12 3l9 6.5V20a1 1 0 01-1 1H4a1 1 0 01-1-1V9.5z"/></svg>
             <span>Home</span>
           </button>
           <!-- Add more tabs as needed -->
         </div>
 
-      </div><!-- /variant-v1 -->
+      </div><!-- /variant-p1vA -->
 
-      <!-- Add more prototypes below.
-           Copy the variant block, change v1 → v2 everywhere,
-           add a matching sidebar-item and sidebar-about-v2. -->
+      <!-- PAGE 2 / VARIANT A example (uncomment to use):
+      <div class="variant" id="variant-p2vA">
+        <div class="m-page active" id="p2vA-home">
+          <div class="m-header"><h1>Home</h1></div>
+          <div style="height:20px"></div>
+        </div>
+        <div class="m-tab-bar">
+          <button class="m-tab active" onclick="switchMTab('p2vA','home',this)">
+            <svg viewBox="0 0 24 24"><path d="M3 9.5L12 3l9 6.5V20a1 1 0 01-1 1H4a1 1 0 01-1-1V9.5z"/></svg>
+            <span>Home</span>
+          </button>
+        </div>
+      </div>
+      -->
 
     </div><!-- /phone-frame -->
   </div><!-- /phone-stage -->
@@ -396,11 +471,40 @@ const COLLECTIONS = {}; // { key: { name, color, count, items: [] } }
    NAVIGATION
    ══════════════════════════════════════════════ */
 
+/* Switch active page — hides all variant groups, shows the selected one,
+   then activates the first variant in that page. */
+function switchPage(pageId) {
+  // Hide all variant groups
+  document.querySelectorAll('.variant-group').forEach(g => g.classList.remove('active'));
+  // Show the selected page's group
+  const group = document.getElementById('page-' + pageId);
+  if (group) group.classList.add('active');
+  // Activate the first sidebar item + its variant
+  const firstItem = group && group.querySelector('.sidebar-item');
+  if (firstItem) {
+    const onclick = firstItem.getAttribute('onclick');
+    // Extract variant id from onclick="switchVariant('p1vA', this)"
+    const match = onclick && onclick.match(/switchVariant\('([^']+)'/);
+    if (match) {
+      // Deactivate all sidebar items globally
+      document.querySelectorAll('.sidebar-item').forEach(s => s.classList.remove('active'));
+      firstItem.classList.add('active');
+      _activateVariant(match[1]);
+    }
+  }
+}
+
 function switchVariant(id, el) {
-  document.querySelectorAll('.variant').forEach(v => v.classList.remove('active'));
-  document.getElementById('variant-' + id).classList.add('active');
   document.querySelectorAll('.sidebar-item').forEach(s => s.classList.remove('active'));
   el.classList.add('active');
+  _activateVariant(id);
+}
+
+function _activateVariant(id) {
+  document.querySelectorAll('.variant').forEach(v => v.classList.remove('active'));
+  const v = document.getElementById('variant-' + id);
+  if (v) v.classList.add('active');
+  // Update about panel
   document.querySelectorAll('[class^="sidebar-about-"]').forEach(a => a.style.display = 'none');
   const about = document.querySelector('.sidebar-about-' + id);
   if (about) about.style.display = 'block';
@@ -427,7 +531,7 @@ function toggleChip(el) {
 /* ══════════════════════════════════════════════
    DETAIL RENDERERS (optional)
    Populate ITEMS/CATEGORIES/COLLECTIONS above,
-   add <div class="m-subpage" id="v1-item-detail">
+   add <div class="m-subpage" id="p1vA-item-detail">
    inside your variant, then call these functions.
    ══════════════════════════════════════════════ */
 

@@ -10,8 +10,8 @@ Read this before building a prototype. It covers orientation, how to think about
 
 The file has:
 - A full shared CSS component library (`.m-*` classes)
-- A navigation system (tab bars, subpages, screen transitions)
-- A working example prototype (Airbnb-like home screen)
+- A navigation system (pages, variants, tab bars, subpages, screen transitions)
+- A working example prototype (Airbnb-like home screen in `example.html`)
 - An empty data model ready to populate
 
 Everything you need is already there. You add HTML and CSS. You don't install anything, import anything, or run a build.
@@ -22,16 +22,41 @@ Everything you need is already there. You add HTML and CSS. You don't install an
 
 **One file = one project.** All prototypes for a product live in one HTML file.
 
-**Sidebar entry = prototype.** Each entry in the sidebar is a different idea or approach — "Inbox model", "Card stack", "One surface". Not a page name.
+**Pages = distinct scenarios.** Page 1, Page 2… Each page is a different angle on the problem — a different user type, a different flow, a completely different surface model. Selected via the dropdown at the top of the sidebar.
 
-**Prototype = however many screens the idea needs.** You might draw:
+**Variants = design alternatives within a page.** Variant A, Variant B… Variant Z, Variant AA… Each variant is a different approach to the same scenario. When you switch pages, the sidebar swaps to show that page's variants and activates the first one.
+
+**Variant = however many screens the idea needs.** You might draw:
 - A single screen to nail a layout
 - Two screens connected by a transition
 - A full tab bar with drill-in detail pages
 - A flow through 3 states of the same feature
 - Whatever the concept needs to feel real
 
-The prototype contains the experience. The sidebar switches between ideas.
+The variant contains the experience. The sidebar switches between alternatives.
+
+---
+
+## Naming system
+
+This is strict. Wrong IDs break navigation silently.
+
+```
+Page ID:         p1, p2, p3…
+Variant ID:      p1vA, p1vB… p1vZ, p1vAA, p1vAB…
+                 p2vA, p2vB…
+
+Variant outer:   id="variant-p1vA"         (must match sidebar onclick)
+Screen:          id="p1vA-home"            ({variantId}-{pagename})
+Subpage:         id="p1vA-listing-detail"  ({variantId}-{name})
+Add overlay:     id="p1vA-add-overlay"     ({variantId}-add-overlay)
+About panel:     class="sidebar-about-p1vA"
+Variant group:   id="page-p1"             (one per page, in sidebar)
+```
+
+Tab `onclick`: `switchMTab('p1vA', 'home', this)` — first arg is variant ID, second is page name (must match the screen `id` suffix).
+
+Variant letters follow spreadsheet column order: A, B, C… Z, AA, AB… AZ, BA, BB…
 
 ---
 
@@ -41,13 +66,15 @@ When asked to build a new prototype:
 
 1. **Understand the concept first.** What is the idea? What should someone feel when they interact with it? A card-based inbox feels different from a flat list. A bottom sheet feels different from a pushed screen. Know what you're building before you write HTML.
 
-2. **Pick the right screens.** Don't build every screen in the app. Build the 1–3 screens that express the core idea. If it's a booking flow, build the list and the detail. If it's a new nav pattern, build the home state and one transition. Prototype the idea, not the whole product.
+2. **Decide: new page or new variant?** If the idea is a fundamentally different scenario or user type, it belongs on a new page. If it's a different design approach to the same scenario, it's a new variant within the current page.
 
-3. **Use shared components first.** The `.m-*` library covers most patterns. Only write custom CSS when the shared components genuinely don't fit. When you do write custom CSS, prefix it with the variant ID (`.v1-`, `.v2-`, etc.).
+3. **Pick the right screens.** Don't build every screen in the app. Build the 1–3 screens that express the core idea. If it's a booking flow, build the list and the detail. If it's a new nav pattern, build the home state and one transition. Prototype the idea, not the whole product.
 
-4. **Make it feel interactive.** Tappable items should respond visually (`:active` states are built into most components). Subpages should slide in. Chips should toggle. The prototype should feel like an app, not a mockup.
+4. **Use shared components first.** The `.m-*` library covers most patterns. Only write custom CSS when the shared components genuinely don't fit. When you do write custom CSS, prefix it with the variant ID (`.p1vA-`, `.p1vB-`, etc.).
 
-5. **Don't over-build.** Empty states, loading states, error states — skip them unless the prototype is specifically about those things. Ship the happy path first.
+5. **Make it feel interactive.** Tappable items should respond visually (`:active` states are built into most components). Subpages should slide in. Chips should toggle. The prototype should feel like an app, not a mockup.
+
+6. **Don't over-build.** Empty states, loading states, error states — skip them unless the prototype is specifically about those things. Ship the happy path first.
 
 ---
 
@@ -57,11 +84,13 @@ When asked to build a new prototype:
 
 | What | Where |
 |---|---|
-| New sidebar entry | Inside `.sidebar-section` div |
-| New about description | Inside `.sidebar-about` div, keyed to variant id |
-| New prototype HTML | Inside `.phone-frame`, after the last existing variant |
+| New page option | `<option>` inside `#page-select` |
+| New variant group | `<div class="variant-group" id="page-{pageId}">` in sidebar, after last existing group |
+| New sidebar variant item | Inside the matching `.variant-group` |
+| New about description | Inside `.sidebar-about`, keyed to variant id |
+| New variant HTML | Inside `.phone-frame`, after the last existing variant |
 | New variant CSS | In the `VARIANT-SPECIFIC STYLES` section of `<style>`, prefixed with variant id |
-| New JS helpers | After the `CHIP TOGGLE` section in `<script>` |
+| New JS helpers | After the `toggleChip` function in `<script>` |
 | Data (items, categories, collections) | At the top of `<script>` in the DATA section |
 
 **What NOT to touch:**
@@ -69,36 +98,20 @@ When asked to build a new prototype:
 - The shared `.m-*` component CSS
 - The detail page shared styles
 - The add modal shared styles
-- The core navigation functions (`switchVariant`, `switchMTab`, `openSubpage`, `closeSubpage`)
+- The core navigation functions (`switchPage`, `switchVariant`, `_activateVariant`, `switchMTab`, `openSubpage`, `closeSubpage`)
 - The detail renderer functions (`openItemDetail`, `openCategoryDetail`, `openCollectionDetail`)
-
----
-
-## ID naming convention
-
-This is strict. Wrong IDs break navigation silently.
-
-```
-Variant outer:   id="variant-v1"          (must match sidebar onclick)
-Page:            id="v1-home"             ({variant}-{pagename})
-Subpage:         id="v1-listing-detail"   ({variant}-{name})
-Add overlay:     id="v1-add-overlay"      ({variant}-add-overlay)
-About panel:     class="sidebar-about-v1" (sidebar-about-{variant})
-```
-
-Tab `onclick`: `switchMTab('v1', 'home', this)` — first arg is variant id, second is page name (must match the page `id` suffix).
 
 ---
 
 ## CSS rules
 
-1. **All variant CSS is prefixed.** `.v1-card`, `.v2-hero`, never `.card` or `.hero`. Unprefixed classes collide across prototypes.
+1. **All variant CSS is prefixed.** `.p1vA-card`, `.p1vB-hero`, never `.card` or `.hero`. Unprefixed classes collide across prototypes.
 
 2. **Use tokens, not hardcoded values.** `var(--text-secondary)` not `#71717a`. `var(--radius-md)` not `14px`. Tokens are in `:root`.
 
 3. **Inline styles for one-offs.** If something is used exactly once and isn't conceptually a component, inline it. `style="padding:0 18px"` is fine. Don't create a class for it.
 
-4. **Don't override `.m-*` classes.** If a shared component needs modification, wrap it or subclass it (`.v1-header .m-section-header { ... }`). Don't mutate the shared styles.
+4. **Don't override `.m-*` classes.** If a shared component needs modification, wrap it or subclass it (`.p1vA-header .m-section-header { ... }`). Don't mutate the shared styles.
 
 ---
 
@@ -112,35 +125,37 @@ Tab `onclick`: `switchMTab('v1', 'home', this)` — first arg is variant id, sec
 
 **Subpages sit above everything.** `.m-subpage` is `z-index: 100`. The tab bar is `z-index: 200`. The add overlay is `z-index: 300`. Don't use z-index values in this range for other elements or they'll conflict.
 
-**Active page.** Only one `.m-page` per variant should have `class="m-page active"` on load. Same for `.m-tab`.
+**Active screen.** Only one `.m-page` per variant should have `class="m-page active"` on load. Same for `.m-tab`.
 
 **Tab switching closes subpages.** `switchMTab` closes all subpages in the variant before switching. This is intentional — tapping a tab always returns to the tab root. If you don't want this, wire tab navigation differently.
 
 **Chip toggle is radio-style.** `toggleChip(el)` deactivates all siblings and activates the one clicked. If you need multi-select, wire it differently: `this.classList.toggle('active')`.
 
+**Switching pages activates the first variant.** `switchPage` automatically finds the first `.sidebar-item` in the new page's `.variant-group` and activates it. Make sure each variant group has at least one sidebar item.
+
 ---
 
 ## Patterns
 
-### Pattern: Tab bar across multiple pages
+### Pattern: Tab bar across multiple screens
 
 ```html
-<div class="variant active" id="variant-v1">
+<div class="variant active" id="variant-p1vA">
 
-  <div class="m-page active" id="v1-home"> ... </div>
-  <div class="m-page" id="v1-explore"> ... </div>
-  <div class="m-page" id="v1-profile"> ... </div>
+  <div class="m-page active" id="p1vA-home"> ... </div>
+  <div class="m-page" id="p1vA-explore"> ... </div>
+  <div class="m-page" id="p1vA-profile"> ... </div>
 
   <div class="m-tab-bar">
-    <button class="m-tab active" onclick="switchMTab('v1','home',this)">
+    <button class="m-tab active" onclick="switchMTab('p1vA','home',this)">
       <svg viewBox="0 0 24 24"><!-- icon --></svg>
       <span>Home</span>
     </button>
-    <button class="m-tab" onclick="switchMTab('v1','explore',this)">
+    <button class="m-tab" onclick="switchMTab('p1vA','explore',this)">
       <svg viewBox="0 0 24 24"><!-- icon --></svg>
       <span>Explore</span>
     </button>
-    <button class="m-tab" onclick="switchMTab('v1','profile',this)">
+    <button class="m-tab" onclick="switchMTab('p1vA','profile',this)">
       <svg viewBox="0 0 24 24"><!-- icon --></svg>
       <span>Profile</span>
     </button>
@@ -153,15 +168,15 @@ Tab `onclick`: `switchMTab('v1', 'home', this)` — first arg is variant id, sec
 
 ```html
 <!-- List item that opens detail -->
-<div class="m-item-row" onclick="openSubpage('v1-item-detail')">
+<div class="m-item-row" onclick="openSubpage('p1vA-item-detail')">
   ...
 </div>
 
 <!-- Detail subpage -->
-<div class="m-subpage" id="v1-item-detail">
+<div class="m-subpage" id="p1vA-item-detail">
   <div class="detail-hero">
     <img src="..." alt="">
-    <button class="detail-hero-back" onclick="closeSubpage('v1-item-detail')">
+    <button class="detail-hero-back" onclick="closeSubpage('p1vA-item-detail')">
       <svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg>
     </button>
   </div>
@@ -175,13 +190,13 @@ Tab `onclick`: `switchMTab('v1', 'home', this)` — first arg is variant id, sec
 ### Pattern: No tab bar (full-screen single surface)
 
 ```html
-<div class="variant active" id="variant-v1">
-  <div class="m-page active" id="v1-main" style="bottom:0">
+<div class="variant active" id="variant-p1vA">
+  <div class="m-page active" id="p1vA-main" style="bottom:0">
     <!-- bottom:0 overrides the default tab-bar-h offset -->
     ...
   </div>
   <!-- No .m-tab-bar -->
-  <button class="m-fab" onclick="openAdd('v1')"> ... </button>
+  <button class="m-fab" onclick="openAdd('p1vA')"> ... </button>
 </div>
 ```
 
@@ -192,7 +207,7 @@ Tab `onclick`: `switchMTab('v1', 'home', this)` — first arg is variant id, sec
 Inside a `.m-subpage`:
 ```html
 <!-- Scrollable body — needs padding-bottom to clear the bar -->
-<div class="v1-detail-body" style="padding:16px 18px 100px;">
+<div class="p1vA-detail-body" style="padding:16px 18px 100px;">
   <!-- content -->
 </div>
 
@@ -322,18 +337,18 @@ Most one-off adjustments don't need a new class. Override inline:
 When the pattern repeats within a prototype, add a class in the variant CSS section:
 
 ```css
-/* ── v2: Listing prototype ── */
-.v2-price-tag {
+/* ── p1vB: Listing prototype ── */
+.p1vB-price-tag {
   font-size: 13px; font-weight: 700;
   color: var(--text-primary);
 }
-.v2-rating {
+.p1vB-rating {
   display: flex; align-items: center; gap: 3px;
   font-size: 12px; font-weight: 500;
 }
 ```
 
-Use it anywhere in the `v2` variant HTML.
+Use it anywhere in the `p1vB` variant HTML.
 
 ### Option 3: Promote to shared component
 
@@ -356,9 +371,9 @@ AppBoard is meant to accumulate. Every prototype you build adds to the vocabular
 
 **Keep variant CSS lean.** The best prototypes use 80% shared components and 20% custom styles. If you're writing a lot of custom CSS, ask whether the shared library is missing something real, or whether you're over-designing.
 
-**Retire old prototypes by commenting them out, not deleting.** Dead prototypes are references. A commented-out `variant-v3` can be revived or mined for patterns.
+**Retire old prototypes by commenting them out, not deleting.** Dead prototypes are references. A commented-out variant block can be revived or mined for patterns.
 
-**Refactor when you see repetition.** If `v3` and `v4` both have nearly identical card styles, consolidate into a shared class. The file will stay readable.
+**Refactor when you see repetition.** If two variants have nearly identical card styles, consolidate into a shared class. The file will stay readable.
 
 ---
 
@@ -382,13 +397,15 @@ AppBoard is meant to accumulate. Every prototype you build adds to the vocabular
 
 **No bottom breathing room.** Content disappears behind the tab bar or FAB. End every `.m-page` with `<div style="height:20px">` (or `100px` if there's a FAB or sticky bar).
 
-**Wrong ID pattern.** Navigation breaks silently if the page `id` doesn't match what `switchMTab` is looking for. `id="v1-home"` must match `switchMTab('v1', 'home', this)`.
+**Wrong ID pattern.** Navigation breaks silently if the screen `id` doesn't match what `switchMTab` is looking for. `id="p1vA-home"` must match `switchMTab('p1vA', 'home', this)`.
 
-**Unprefixed CSS.** `.card { ... }` defined in one variant bleeds into another. Always prefix: `.v1-card { ... }`.
+**Unprefixed CSS.** `.card { ... }` defined in one variant bleeds into another. Always prefix: `.p1vA-card { ... }`.
 
 **Hardcoded colors instead of tokens.** Breaks when the accent color changes. Use `var(--accent)`, `var(--text-secondary)`, etc.
 
 **z-index conflicts.** Pages are 0, subpages are 100, tab bar is 200, add overlay is 300. Don't use these values for other elements.
+
+**Missing variant group for a page.** If you add a page option to the dropdown without a matching `<div class="variant-group" id="page-{pageId}">`, `switchPage` will find nothing and show a blank sidebar.
 
 **Building too much.** A prototype that tries to show every screen of an app is usually less useful than one that shows the core 2–3 screens with real content and real interactions. Constrain yourself.
 

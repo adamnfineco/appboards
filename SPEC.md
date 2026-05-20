@@ -22,22 +22,54 @@ Complete reference for building prototypes in AppBoard. Every component, every p
 </head>
 <body>
   <div class="desktop-shell">
-    <div class="sidebar"> ... </div>
+    <div class="sidebar">
+      <!-- page dropdown -->
+      <!-- variant groups (one per page) -->
+      <!-- about panel -->
+    </div>
     <div class="phone-stage">
       <div class="phone-frame">
-        <div class="variant active" id="variant-v1"> ... </div>
-        <div class="variant" id="variant-v2"> ... </div>
+        <div class="variant active" id="variant-p1vA"> ... </div>
+        <div class="variant" id="variant-p1vB"> ... </div>
+        <div class="variant" id="variant-p2vA"> ... </div>
       </div>
     </div>
   </div>
   <script>
     /* DATA */
-    /* CTA HELPERS */
     /* NAVIGATION */
     /* DETAIL RENDERERS */
   </script>
 </body>
 ```
+
+---
+
+## Mental model
+
+**Pages** = distinct scenarios (Page 1, Page 2…). Selected via a dropdown at the top of the sidebar.
+
+**Variants** = design alternatives within a page (Variant A, Variant B… Variant Z, Variant AA…). Listed in the sidebar below the dropdown. Switching pages swaps which set of variants is visible in the sidebar and activates the first variant of the new page.
+
+**Variant** = one complete prototype with as many screens as the idea needs.
+
+---
+
+## Naming system
+
+| Thing | ID pattern | Example |
+|---|---|---|
+| Page | `p{n}` | `p1`, `p2` |
+| Variant outer div | `variant-{pageId}v{letter}` | `variant-p1vA`, `variant-p2vB` |
+| Variant short ID | `{pageId}v{letter}` | `p1vA`, `p2vB` |
+| Screen (m-page) | `{variantId}-{pagename}` | `p1vA-home`, `p1vA-explore` |
+| Subpage | `{variantId}-{name}` | `p1vA-listing-detail` |
+| Add overlay | `{variantId}-add-overlay` | `p1vA-add-overlay` |
+| About panel | `.sidebar-about-{variantId}` | `.sidebar-about-p1vA` |
+| Variant group | `page-{pageId}` | `page-p1`, `page-p2` |
+| Variant CSS prefix | `.{variantId}-classname` | `.p1vA-card`, `.p1vB-hero` |
+
+Variant letters follow spreadsheet column order: A, B… Z, AA, AB… AZ, BA…
 
 ---
 
@@ -70,22 +102,78 @@ All tokens are CSS custom properties on `:root`. Reference them in any inline st
 
 ---
 
+## Sidebar structure
+
+```html
+<div class="sidebar">
+  <div class="sidebar-logo">[Project Name]</div>
+
+  <!-- Page selector -->
+  <div class="sidebar-page-selector">
+    <select id="page-select" class="sidebar-page-select" onchange="switchPage(this.value)">
+      <option value="p1">Page 1</option>
+      <option value="p2">Page 2</option>
+    </select>
+  </div>
+
+  <!-- Variant group for Page 1 -->
+  <div class="variant-group active" id="page-p1">
+    <div class="sidebar-section">
+      <div class="sidebar-section-label">Variants</div>
+      <div class="sidebar-item active" onclick="switchVariant('p1vA', this)">
+        <div class="sidebar-item-dot" style="background: var(--accent)"></div>
+        Variant A
+      </div>
+      <div class="sidebar-item" onclick="switchVariant('p1vB', this)">
+        <div class="sidebar-item-dot" style="background: #3b82f6"></div>
+        Variant B
+      </div>
+    </div>
+  </div>
+
+  <!-- Variant group for Page 2 (hidden until selected) -->
+  <div class="variant-group" id="page-p2">
+    <div class="sidebar-section">
+      <div class="sidebar-section-label">Variants</div>
+      <div class="sidebar-item" onclick="switchVariant('p2vA', this)">
+        <div class="sidebar-item-dot" style="background: var(--accent)"></div>
+        Variant A
+      </div>
+    </div>
+  </div>
+
+  <!-- About panel -->
+  <div class="sidebar-section sidebar-about">
+    <div class="sidebar-about-p1vA">...</div>
+    <div class="sidebar-about-p1vB" style="display:none;">...</div>
+    <div class="sidebar-about-p2vA" style="display:none;">...</div>
+  </div>
+</div>
+```
+
+**Rules:**
+- Only one `.variant-group` has `class="variant-group active"` at load time
+- `switchPage(pageId)` hides all groups, shows the selected one, activates its first variant
+- `switchVariant(id, el)` activates the matching `.variant` in `.phone-frame` and updates the about panel
+
+---
+
 ## Prototype structure (variant)
 
 Every prototype is a `<div class="variant">` inside `.phone-frame`. Only one is visible at a time.
 
 ```html
-<div class="variant active" id="variant-v1">
+<div class="variant active" id="variant-p1vA">
 
-  <!-- PAGES — one per tab, identified by {variant}-{name} -->
-  <div class="m-page active" id="v1-home"> ... </div>
-  <div class="m-page" id="v1-library"> ... </div>
+  <!-- SCREENS — one per tab, identified by {variantId}-{name} -->
+  <div class="m-page active" id="p1vA-home"> ... </div>
+  <div class="m-page" id="p1vA-explore"> ... </div>
 
   <!-- SUBPAGES — drill-in detail views -->
-  <div class="m-subpage" id="v1-detail"> ... </div>
+  <div class="m-subpage" id="p1vA-detail"> ... </div>
 
   <!-- ADD MODAL (optional) -->
-  <div class="add-overlay" id="v1-add-overlay" onclick="closeAdd('v1')">
+  <div class="add-overlay" id="p1vA-add-overlay" onclick="closeAdd('p1vA')">
     <div class="add-sheet" onclick="event.stopPropagation()"> ... </div>
   </div>
 
@@ -93,16 +181,16 @@ Every prototype is a `<div class="variant">` inside `.phone-frame`. Only one is 
   <div class="m-tab-bar"> ... </div>
 
   <!-- FAB (if needed) -->
-  <button class="m-fab" onclick="openAdd('v1')"> ... </button>
+  <button class="m-fab" onclick="openAdd('p1vA')"> ... </button>
 
 </div>
 ```
 
 **Rules:**
-- `id` always follows pattern `variant-{id}` for the outer div
-- Pages follow `{variant}-{pagename}` — e.g. `v1-home`, `v1-library`
-- Subpages follow `{variant}-{name}` — e.g. `v1-listing-detail`
-- First page gets `class="m-page active"`, rest just `class="m-page"`
+- Outer div: `id="variant-{variantId}"` — must match sidebar `onclick`
+- Screens: `id="{variantId}-{pagename}"` — e.g. `p1vA-home`, `p1vA-explore`
+- Subpages: `id="{variantId}-{name}"` — e.g. `p1vA-listing-detail`
+- First screen gets `class="m-page active"`, rest just `class="m-page"`
 - First tab button gets `class="m-tab active"`, rest just `class="m-tab"`
 
 ---
@@ -114,7 +202,7 @@ Every prototype is a `<div class="variant">` inside `.phone-frame`. Only one is 
 Top-level scrollable content area for a tab. Fades in from slightly below when activated.
 
 ```html
-<div class="m-page active" id="v1-home">
+<div class="m-page active" id="p1vA-home">
   <!-- content -->
   <div style="height:20px"></div>  <!-- bottom breathing room -->
 </div>
@@ -131,20 +219,20 @@ Top-level scrollable content area for a tab. Fades in from slightly below when a
 Drill-in detail page that slides in from the right. Lives at `z-index: 100`, above pages.
 
 ```html
-<div class="m-subpage" id="v1-detail">
+<div class="m-subpage" id="p1vA-detail">
   <!-- full-screen content -->
 </div>
 ```
 
 Trigger:
 ```js
-openSubpage('v1-detail')   // activate
-closeSubpage('v1-detail')  // deactivate
+openSubpage('p1vA-detail')   // activate
+closeSubpage('p1vA-detail')  // deactivate
 ```
 
 Always include a back button at the top of the subpage:
 ```html
-<button onclick="closeSubpage('v1-detail')" style="position:absolute;top:48px;left:14px; ...">
+<button onclick="closeSubpage('p1vA-detail')" style="position:absolute;top:48px;left:14px; ...">
   <svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg>
 </button>
 ```
@@ -158,13 +246,13 @@ iOS-style frosted-glass tab bar, fixed to the bottom of the variant.
 
 ```html
 <div class="m-tab-bar">
-  <button class="m-tab active" onclick="switchMTab('v1','home',this)">
+  <button class="m-tab active" onclick="switchMTab('p1vA','home',this)">
     <svg viewBox="0 0 24 24"><!-- icon --></svg>
     <span>Home</span>
   </button>
-  <button class="m-tab" onclick="switchMTab('v1','library',this)">
+  <button class="m-tab" onclick="switchMTab('p1vA','explore',this)">
     <svg viewBox="0 0 24 24"><!-- icon --></svg>
-    <span>Library</span>
+    <span>Explore</span>
   </button>
 </div>
 ```
@@ -180,7 +268,7 @@ iOS-style frosted-glass tab bar, fixed to the bottom of the variant.
 Floating action button, bottom-right, above the tab bar.
 
 ```html
-<button class="m-fab" onclick="openAdd('v1')">
+<button class="m-fab" onclick="openAdd('p1vA')">
   <svg viewBox="0 0 24 24">
     <line x1="12" y1="5" x2="12" y2="19"/>
     <line x1="5" y1="12" x2="19" y2="12"/>
@@ -215,7 +303,7 @@ Header for subpages or pushed screens. Back button + title.
 
 ```html
 <div class="m-back-header">
-  <button class="m-back-btn" onclick="closeSubpage('v1-detail')">
+  <button class="m-back-btn" onclick="closeSubpage('p1vA-detail')">
     <svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg>
   </button>
   <h2>Detail Title</h2>
@@ -409,7 +497,7 @@ Supports up to 8 children with stagger delays (0ms → 350ms). Works on any flex
 A form sheet that slides up from the bottom. Triggered by FAB or any button.
 
 ```html
-<div class="add-overlay" id="v1-add-overlay" onclick="closeAdd('v1')">
+<div class="add-overlay" id="p1vA-add-overlay" onclick="closeAdd('p1vA')">
   <div class="add-sheet" onclick="event.stopPropagation()">
     <div class="add-handle"></div>
     <h3>Sheet Title</h3>
@@ -436,9 +524,9 @@ A form sheet that slides up from the bottom. Triggered by FAB or any button.
 </div>
 ```
 
-JS: `openAdd('v1')` / `closeAdd('v1')`
+JS: `openAdd('p1vA')` / `closeAdd('p1vA')`
 
-The overlay click-outside-to-dismiss is already wired via `onclick="closeAdd('v1')"` on `.add-overlay`. The sheet's `event.stopPropagation()` prevents tap-through.
+The overlay click-outside-to-dismiss is already wired via `onclick="closeAdd('p1vA')"` on `.add-overlay`. The sheet's `event.stopPropagation()` prevents tap-through.
 
 ---
 
@@ -447,10 +535,10 @@ The overlay click-outside-to-dismiss is already wired via `onclick="closeAdd('v1
 For item/content detail subpages with a hero image at top.
 
 ```html
-<div class="m-subpage" id="v1-item-detail">
+<div class="m-subpage" id="p1vA-item-detail">
   <div class="detail-hero">
     <img src="https://picsum.photos/seed/item/780/400" alt="">
-    <button class="detail-hero-back" onclick="closeSubpage('v1-item-detail')">
+    <button class="detail-hero-back" onclick="closeSubpage('p1vA-item-detail')">
       <svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg>
     </button>
   </div>
@@ -483,19 +571,22 @@ For list-style detail pages (category/collection): `.list-detail-header` · `.li
 ## Navigation JS reference
 
 ```js
-// Switch the active prototype in the sidebar
-switchVariant('v2', el)
+// Switch the active page (called by the page dropdown)
+switchPage('p2')
 
-// Switch tab within a prototype (closes any open subpages first)
-switchMTab('v1', 'home', el)
+// Switch the active variant in the sidebar
+switchVariant('p1vB', el)
+
+// Switch tab within a variant (closes any open subpages first)
+switchMTab('p1vA', 'home', el)
 
 // Open/close a subpage
-openSubpage('v1-detail')
-closeSubpage('v1-detail')
+openSubpage('p1vA-detail')
+closeSubpage('p1vA-detail')
 
 // Open/close the add modal bottom sheet
-openAdd('v1')
-closeAdd('v1')
+openAdd('p1vA')
+closeAdd('p1vA')
 
 // Deactivate all .m-chip siblings, activate clicked one
 toggleChip(el)
@@ -547,16 +638,16 @@ const COLLECTIONS = {
 
 Then use the detail renderers:
 ```js
-openItemDetail('v1', 'item-key')         // → populates + opens #v1-item-detail
-openCategoryDetail('v1', 'category-key') // → populates + opens #v1-category-detail
-openCollectionDetail('v1', 'col-key')    // → populates + opens #v1-collection-detail
+openItemDetail('p1vA', 'item-key')         // → populates + opens #p1vA-item-detail
+openCategoryDetail('p1vA', 'category-key') // → populates + opens #p1vA-category-detail
+openCollectionDetail('p1vA', 'col-key')    // → populates + opens #p1vA-collection-detail
 ```
 
 These subpage containers must exist inside your variant:
 ```html
-<div class="m-subpage" id="v1-item-detail"></div>
-<div class="m-subpage" id="v1-category-detail"></div>
-<div class="m-subpage" id="v1-collection-detail"></div>
+<div class="m-subpage" id="p1vA-item-detail"></div>
+<div class="m-subpage" id="p1vA-category-detail"></div>
+<div class="m-subpage" id="p1vA-collection-detail"></div>
 ```
 
 ---
@@ -585,14 +676,17 @@ Pick descriptive seeds that reflect the content — `apt-brooklyn`, `cat-recipe`
 
 | Thing | Convention |
 |---|---|
-| Prototype ID | `v1`, `v2`, `v3` … |
-| Variant outer div | `id="variant-{id}"` |
-| Page div | `id="{id}-{pagename}"` e.g. `v1-home` |
-| Subpage div | `id="{id}-{name}"` e.g. `v1-listing-detail` |
-| Variant CSS prefix | `.{id}-classname` e.g. `.v1-card` |
-| Sidebar item | `onclick="switchVariant('{id}', this)"` |
-| About panel | `class="sidebar-about-{id}"` |
-| Tab switching | `onclick="switchMTab('{id}','{pagename}',this)"` |
+| Page ID | `p1`, `p2`, `p3`… |
+| Variant ID | `p1vA`, `p1vB`… `p2vA`… |
+| Variant outer div | `id="variant-{variantId}"` |
+| Screen div | `id="{variantId}-{pagename}"` e.g. `p1vA-home` |
+| Subpage div | `id="{variantId}-{name}"` e.g. `p1vA-listing-detail` |
+| Variant CSS prefix | `.{variantId}-classname` e.g. `.p1vA-card` |
+| Sidebar item | `onclick="switchVariant('{variantId}', this)"` |
+| About panel | `class="sidebar-about-{variantId}"` |
+| Tab switching | `onclick="switchMTab('{variantId}','{pagename}',this)"` |
+| Variant group | `id="page-{pageId}"` e.g. `page-p1` |
+| Page dropdown | `<option value="{pageId}">{label}</option>` |
 | Horizontal scroll | Always end with `<div class="m-h-scroll-end"></div>` |
 | Bottom breathing room | `<div style="height:20px"></div>` at end of `.m-page` content; `100px` if FAB or sticky bar is present |
 | Status bar offset | `.m-header` has `padding-top: 52px` built in — use it as the first element on every page |
@@ -617,9 +711,9 @@ For one-off adjustments to shared components:
 For patterns that repeat within a prototype. Add in the variant CSS section, prefix with variant id:
 
 ```css
-/* ── v2: Listing prototype ── */
-.v2-price-tag { font-size:13px; font-weight:700; }
-.v2-rating { display:flex; align-items:center; gap:3px; font-size:12px; }
+/* ── p1vB: Listing prototype ── */
+.p1vB-price-tag { font-size:13px; font-weight:700; }
+.p1vB-rating { display:flex; align-items:center; gap:3px; font-size:12px; }
 ```
 
 ### 3. Promote to shared `.m-*`
@@ -696,9 +790,10 @@ Star:      <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.7
 |---|---|---|
 | Last card bleeds to phone edge | Browser clips `padding-right` on overflow scroll | End `.m-h-scroll` with `<div class="m-h-scroll-end"></div>` |
 | Content hidden behind tab bar | No bottom breathing room | End `.m-page` content with `<div style="height:20px">` (or `100px`) |
-| Navigation silently broken | Wrong page ID format | `id="{variant}-{pagename}"` must match `switchMTab('{variant}','{pagename}',this)` |
-| Styles bleeding between prototypes | Unprefixed CSS class | Always prefix variant CSS: `.v1-card`, `.v2-hero` |
+| Navigation silently broken | Wrong ID format | `id="{variantId}-{pagename}"` must match `switchMTab('{variantId}','{pagename}',this)` |
+| Styles bleeding between variants | Unprefixed CSS class | Always prefix variant CSS: `.p1vA-card`, `.p1vB-hero` |
 | Z-index conflicts | Reusing reserved z-index values | Pages:0 · Subpages:100 · Tab bar:200 · Add overlay:300 — don't use these values elsewhere |
 | Content too close to top | Missing status bar offset | Use `.m-header` as first element (has 52px top padding built in) |
 | Chips behave as multi-select | Using `toggleChip` for multi-select | For multi-select: `this.classList.toggle('active')` instead |
 | Sticky bar floats mid-screen in subpage | `position:sticky` doesn't work without overflow | Use `position:absolute; bottom:0; left:0; right:0` on bottom bars inside `.m-subpage`, and add `padding-bottom:100px` to the scrollable body content above it |
+| Switching pages doesn't update sidebar | Variant group not added for new page | Each page needs a `<div class="variant-group" id="page-{pageId}">` in the sidebar |
