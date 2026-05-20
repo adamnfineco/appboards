@@ -59,6 +59,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>AppBoard — [Project Name]</title>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%2318181b'/%3E%3Crect x='8' y='6' width='10' height='20' rx='3' fill='none' stroke='%23c07b40' stroke-width='1.8'/%3E%3Ccircle cx='22' cy='11' r='2' fill='%23c07b40' opacity='.5'/%3E%3Ccircle cx='22' cy='17' r='2' fill='%23c07b40' opacity='.8'/%3E%3Ccircle cx='22' cy='23' r='2' fill='%23c07b40'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -73,6 +74,7 @@
    DESIGN TOKENS
    ══════════════════════════════════════════════ */
 :root {
+  /* ── Phone / prototype canvas ── */
   --bg:             #fafafa;
   --surface:        #ffffff;
   --text-primary:   #18181b;
@@ -80,10 +82,20 @@
   --text-tertiary:  #a1a1aa;
   --border:         #e4e4e7;
   --border-subtle:  #f4f4f5;
-  --accent:         #059669;  /* change to your brand color */
-  --accent-soft:    #ecfdf5;
-  --accent-text:    #047857;
-  --sidebar-bg:     #ffffff;
+  --accent:         #c07b40;  /* change to your project accent color */
+  --accent-soft:    #fdf3e8;
+  --accent-text:    #a0622e;
+
+  /* ── Sidebar — dark so the phone is the hero ── */
+  --sb-bg:          #18181b;
+  --sb-text:        rgba(255,255,255,0.88);
+  --sb-muted:       rgba(255,255,255,0.36);
+  --sb-surface:     rgba(255,255,255,0.06);
+  --sb-border:      rgba(255,255,255,0.08);
+  --sb-active-bg:   rgba(255,255,255,0.09);
+  --sb-active-bar:  #c07b40;
+
+  /* ── Layout ── */
   --sidebar-w:      240px;
   --phone-w:        390px;
   --phone-h:        844px;
@@ -101,7 +113,7 @@
    ══════════════════════════════════════════════ */
 html {
   font-family: 'Outfit', system-ui, sans-serif;
-  background: #f0f0f0;
+  background: #f2f0ed;  /* warm neutral — ties to amber accent, lets phone float */
   color: var(--text-primary);
   -webkit-font-smoothing: antialiased;
   height: 100%;
@@ -113,55 +125,72 @@ body { height: 100%; overflow: hidden; }
 /* ── Sidebar ── */
 .sidebar {
   width: var(--sidebar-w);
-  background: var(--sidebar-bg);
-  border-right: 1px solid var(--border);
+  background: var(--sb-bg);
+  border-right: 1px solid var(--sb-border);
   display: flex; flex-direction: column;
   flex-shrink: 0; padding: 24px 0; overflow-y: auto;
+  /* hide scrollbar — sidebar rarely overflows, scroll still works */
+  -ms-overflow-style: none; scrollbar-width: none;
 }
-.sidebar-logo { padding: 0 20px 20px; font-size: 18px; font-weight: 700; letter-spacing: -0.03em; }
+.sidebar::-webkit-scrollbar { display: none; }
+
+/* Two-line logo: "APPBOARDS" dim label above, project name large below */
+.sidebar-logo { padding: 0 20px 20px; }
+.sidebar-logo-mark { font-size: 10px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--sb-muted); margin-bottom: 5px; }
+.sidebar-logo-project { font-size: 16px; font-weight: 700; letter-spacing: -0.03em; color: var(--sb-text); }
 
 /* Page selector */
 .sidebar-page-selector { padding: 0 12px 16px; }
 .sidebar-page-select {
   width: 100%;
   padding: 7px 10px;
-  border: 1px solid var(--border);
+  border: 1px solid var(--sb-border);
   border-radius: var(--radius-sm);
   font-family: inherit;
   font-size: 12px;
   font-weight: 600;
-  color: var(--text-primary);
-  background: var(--bg);
+  color: var(--sb-text);
+  background: var(--sb-surface);
   cursor: pointer;
   appearance: none;
   -webkit-appearance: none;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2371717a' stroke-width='2.5'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23ffffff' stroke-width='2.5' stroke-opacity='.4'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
   background-repeat: no-repeat;
   background-position: right 10px center;
   padding-right: 28px;
   transition: border-color var(--transition-fast);
 }
-.sidebar-page-select:focus { outline: none; border-color: var(--accent); }
+.sidebar-page-select:focus { outline: none; border-color: var(--sb-active-bar); }
 
 .sidebar-section { padding: 0 12px; margin-bottom: 8px; }
-.sidebar-section-label { font-size: 10px; font-weight: 600; color: var(--text-tertiary); text-transform: uppercase; letter-spacing: 0.08em; padding: 0 8px 8px; }
-.sidebar-item { display: flex; align-items: center; gap: 10px; padding: 9px 12px; border-radius: 8px; cursor: pointer; font-size: 13px; font-weight: 500; color: var(--text-secondary); transition: all var(--transition-fast); -webkit-user-select: none; }
-.sidebar-item:hover { background: var(--border-subtle); color: var(--text-primary); }
-.sidebar-item.active { background: var(--text-primary); color: white; }
+.sidebar-section-label { font-size: 10px; font-weight: 600; color: var(--sb-muted); text-transform: uppercase; letter-spacing: 0.08em; padding: 0 8px 8px; }
+.sidebar-item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 9px 12px 9px 14px;
+  border-left: 2px solid transparent;
+  border-radius: 0 6px 6px 0;
+  cursor: pointer; font-size: 13px; font-weight: 500;
+  color: var(--sb-muted);
+  transition: all var(--transition-fast);
+  -webkit-user-select: none;
+}
+.sidebar-item:hover { background: var(--sb-surface); color: var(--sb-text); }
+.sidebar-item.active { background: var(--sb-active-bg); color: var(--sb-text); border-left-color: var(--sb-active-bar); }
+.sidebar-item:focus-visible { outline: 1px solid var(--sb-active-bar); outline-offset: -1px; border-radius: 4px; }
 .sidebar-item-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
 
 /* Variant groups — one per page */
 .variant-group { display: none; }
 .variant-group.active { display: block; }
 
-.sidebar-about { margin-top: auto; padding-top: 16px; border-top: 1px solid var(--border-subtle); }
+.sidebar-about { margin-top: auto; padding-top: 16px; border-top: 1px solid var(--sb-border); }
 
 /* ── Phone Stage + Frame ── */
 .phone-stage { flex: 1; display: flex; align-items: center; justify-content: center; padding: 24px; }
 .phone-frame {
   width: var(--phone-w); height: var(--phone-h);
   background: var(--bg); border-radius: 44px;
-  box-shadow: 0 0 0 10px #1d1d1f, 0 20px 60px rgba(0,0,0,0.2), 0 0 0 11px rgba(255,255,255,0.1);
+  box-shadow: 0 0 0 10px #1d1d1f, 0 20px 60px rgba(24,18,12,0.18), 0 0 0 11px rgba(255,255,255,0.08);
   overflow: hidden; position: relative;
 }
 .variant { display: none; width: 100%; height: 100%; position: relative; }
@@ -338,7 +367,10 @@ body { height: 100%; overflow: hidden; }
 
   <!-- ═══════ SIDEBAR ═══════ -->
   <div class="sidebar">
-    <div class="sidebar-logo">[Project Name]</div>
+    <div class="sidebar-logo">
+      <div class="sidebar-logo-mark">AppBoards</div>
+      <div class="sidebar-logo-project">[Project Name]</div>
+    </div>
 
     <!-- Page selector — one <option> per page -->
     <div class="sidebar-page-selector">
@@ -383,12 +415,12 @@ body { height: 100%; overflow: hidden; }
 
     <!-- About panel -->
     <div class="sidebar-section sidebar-about">
-      <div class="sidebar-about-p1vA">
-        <div class="sidebar-section-label">About</div>
-        <div style="padding:0 8px; font-size:11px; color:var(--text-secondary); line-height:1.5;">
-          Describe what this variant is exploring.
+        <div class="sidebar-about-p1vA">
+          <div class="sidebar-section-label">About</div>
+          <div style="padding:0 8px; font-size:11px; color:var(--sb-muted); line-height:1.5;">
+            Describe what this variant is exploring.
+          </div>
         </div>
-      </div>
     </div>
   </div>
 

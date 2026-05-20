@@ -53,6 +53,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>AppBoard — Example</title>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%2318181b'/%3E%3Crect x='8' y='6' width='10' height='20' rx='3' fill='none' stroke='%23c07b40' stroke-width='1.8'/%3E%3Ccircle cx='22' cy='11' r='2' fill='%23c07b40' opacity='.5'/%3E%3Ccircle cx='22' cy='17' r='2' fill='%23c07b40' opacity='.8'/%3E%3Ccircle cx='22' cy='23' r='2' fill='%23c07b40'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -67,7 +68,7 @@
    DESIGN TOKENS
    ══════════════════════════════════════════════ */
 :root {
-  /* Colors */
+  /* ── Phone / prototype canvas ── */
   --bg:             #fafafa;
   --surface:        #ffffff;
   --text-primary:   #18181b;
@@ -75,27 +76,29 @@
   --text-tertiary:  #a1a1aa;
   --border:         #e4e4e7;
   --border-subtle:  #f4f4f5;
-  --accent:         #059669;
-  --accent-soft:    #ecfdf5;
-  --accent-text:    #047857;
+  --accent:         #c07b40;
+  --accent-soft:    #fdf3e8;
+  --accent-text:    #a0622e;
 
-  /* Shell */
-  --sidebar-bg:     #ffffff;
+  /* ── Sidebar — dark so the phone is the hero ── */
+  --sb-bg:          #18181b;
+  --sb-text:        rgba(255,255,255,0.88);
+  --sb-muted:       rgba(255,255,255,0.36);
+  --sb-surface:     rgba(255,255,255,0.06);
+  --sb-border:      rgba(255,255,255,0.08);
+  --sb-active-bg:   rgba(255,255,255,0.09);
+  --sb-active-bar:  #c07b40;
+
+  /* ── Layout ── */
   --sidebar-w:      240px;
   --phone-w:        390px;
   --phone-h:        844px;
-
-  /* Radii */
   --radius-sm:      8px;
   --radius-md:      14px;
   --radius-lg:      20px;
   --radius-xl:      28px;
-
-  /* Transitions */
   --transition-fast: 180ms cubic-bezier(0.16, 1, 0.3, 1);
   --transition-med:  320ms cubic-bezier(0.16, 1, 0.3, 1);
-
-  /* Layout */
   --tab-bar-h: 80px;
 }
 
@@ -104,7 +107,7 @@
    ══════════════════════════════════════════════ */
 html {
   font-family: 'Outfit', system-ui, sans-serif;
-  background: #f0f0f0;
+  background: #f2f0ed;
   color: var(--text-primary);
   -webkit-font-smoothing: antialiased;
   height: 100%;
@@ -119,21 +122,19 @@ body { height: 100%; overflow: hidden; }
 /* ── Sidebar ── */
 .sidebar {
   width: var(--sidebar-w);
-  background: var(--sidebar-bg);
-  border-right: 1px solid var(--border);
+  background: var(--sb-bg);
+  border-right: 1px solid var(--sb-border);
   display: flex;
   flex-direction: column;
   flex-shrink: 0;
   padding: 24px 0;
   overflow-y: auto;
+  -ms-overflow-style: none; scrollbar-width: none;
 }
-.sidebar-logo {
-  padding: 0 20px 24px;
-  font-size: 18px;
-  font-weight: 700;
-  letter-spacing: -0.03em;
-  color: var(--text-primary);
-}
+.sidebar::-webkit-scrollbar { display: none; }
+.sidebar-logo { padding: 0 20px 24px; }
+.sidebar-logo-mark { font-size: 10px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--sb-muted); margin-bottom: 5px; }
+.sidebar-logo-project { font-size: 16px; font-weight: 700; letter-spacing: -0.03em; color: var(--sb-text); }
 .sidebar-section {
   padding: 0 12px;
   margin-bottom: 8px;
@@ -141,7 +142,7 @@ body { height: 100%; overflow: hidden; }
 .sidebar-section-label {
   font-size: 10px;
   font-weight: 600;
-  color: var(--text-tertiary);
+  color: var(--sb-muted);
   text-transform: uppercase;
   letter-spacing: 0.08em;
   padding: 0 8px 8px;
@@ -150,17 +151,19 @@ body { height: 100%; overflow: hidden; }
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 9px 12px;
-  border-radius: 8px;
+  padding: 9px 12px 9px 14px;
+  border-left: 2px solid transparent;
+  border-radius: 0 6px 6px 0;
   cursor: pointer;
   font-size: 13px;
   font-weight: 500;
-  color: var(--text-secondary);
+  color: var(--sb-muted);
   transition: all var(--transition-fast);
   -webkit-user-select: none;
 }
-.sidebar-item:hover { background: var(--border-subtle); color: var(--text-primary); }
-.sidebar-item.active { background: var(--text-primary); color: white; }
+.sidebar-item:hover { background: var(--sb-surface); color: var(--sb-text); }
+.sidebar-item.active { background: var(--sb-active-bg); color: var(--sb-text); border-left-color: var(--sb-active-bar); }
+.sidebar-item:focus-visible { outline: 1px solid var(--sb-active-bar); outline-offset: -1px; border-radius: 4px; }
 .sidebar-item-dot {
   width: 6px;
   height: 6px;
@@ -183,8 +186,8 @@ body { height: 100%; overflow: hidden; }
   border-radius: 44px;
   box-shadow:
     0 0 0 10px #1d1d1f,
-    0 20px 60px rgba(0,0,0,0.2),
-    0 0 0 11px rgba(255,255,255,0.1);
+    0 20px 60px rgba(24,18,12,0.18),
+    0 0 0 11px rgba(255,255,255,0.08);
   overflow: hidden;
   position: relative;
 }
@@ -569,7 +572,7 @@ body { height: 100%; overflow: hidden; }
 /* ══════════════════════════════════════════════
    SIDEBAR ABOUT PANEL
    ══════════════════════════════════════════════ */
-.sidebar-about { margin-top: auto; padding-top: 16px; border-top: 1px solid var(--border-subtle); }
+.sidebar-about { margin-top: auto; padding-top: 16px; border-top: 1px solid var(--sb-border); }
 
 
 /* ══════════════════════════════════════════════
@@ -686,7 +689,10 @@ body { height: 100%; overflow: hidden; }
 
   <!-- ═══════ SIDEBAR ═══════ -->
   <div class="sidebar">
-    <div class="sidebar-logo">AppBoard</div>
+    <div class="sidebar-logo">
+      <div class="sidebar-logo-mark">AppBoards</div>
+      <div class="sidebar-logo-project">Example</div>
+    </div>
 
     <div class="sidebar-section">
       <div class="sidebar-section-label">Prototypes</div>
@@ -708,7 +714,7 @@ body { height: 100%; overflow: hidden; }
     <div class="sidebar-section sidebar-about">
       <div class="sidebar-about-v1">
         <div class="sidebar-section-label">About</div>
-        <div style="padding:0 8px; font-size:11px; color:var(--text-secondary); line-height:1.5;">
+        <div style="padding:0 8px; font-size:11px; color:var(--sb-muted); line-height:1.5;">
           Airbnb-style home screen. Category filter bar, horizontally scrolling listing cards, tap to open a listing detail subpage.
         </div>
       </div>
