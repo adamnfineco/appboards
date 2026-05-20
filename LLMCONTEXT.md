@@ -476,3 +476,74 @@ Header padding:             52px top, 18px sides, 14px bottom
 ```
 
 When in doubt: `18px` horizontal, `12–16px` vertical for interactive rows, `22–24px` for section openers.
+
+---
+
+## Collaboration Mode (AppBoards service)
+
+If a `.appboard` file exists in this directory, a live sync session is active at [appboards.co](https://appboards.co). The sync agent is watching this folder and pushing variant files to the shared board in real time.
+
+### Read the config first
+
+```json
+// .appboard
+{
+  "key": "fox-river-41",
+  "server": "https://appboards.co",
+  "owner_token": "...",
+  "local_port": 7341
+}
+```
+
+The `local_port` is what you use to talk to the agent's local API.
+
+### Claiming a variant (always do this first)
+
+```bash
+curl -s -X POST http://localhost:{local_port}/variants/claim \
+  -H "Content-Type: application/json" \
+  -d '{"label": "Dark palette"}'
+```
+
+Response:
+```json
+{
+  "variant_id": "p1vA",
+  "filename": "p1vA.html",
+  "filepath": "/abs/path/to/project/p1vA.html"
+}
+```
+
+Write your variant HTML to the returned `filepath`. The agent detects the file, syncs it to the board, and everyone watching sees it appear.
+
+The label is optional but helpful — it becomes "A — Dark palette" in the sidebar for everyone on the call.
+
+### Deleting a variant you own
+
+```bash
+curl -s -X DELETE http://localhost:{local_port}/variants/{variant_id}
+```
+
+Also removes the local file.
+
+### Checking agent status
+
+```bash
+curl -s http://localhost:{local_port}/status
+```
+
+### Rules for collaboration
+
+- **One variant per claim.** Call claim again to get a second slot.
+- **Max 256KB per variant.** No base64-encoded images — use remote URLs (picsum.photos, CDN links, etc.).
+- **Don't edit other people's variant files.** If someone else's idea inspires you, create your own variant. That's the point.
+- **Variant IDs are assigned by the server** — always claim before writing, don't invent IDs yourself.
+- **Use the component library** (`.m-*` classes from SPEC.md) for consistency across variants.
+
+### Example workflow
+
+1. Someone calls "I want to try a dark palette on the home screen"
+2. You claim a variant: `curl -X POST http://localhost:7341/variants/claim -d '{"label":"Dark palette"}'`
+3. Server returns `p1vB.html`
+4. You write `p1vB.html` using the AppBoard template structure
+5. The board updates for everyone watching within ~1 second
