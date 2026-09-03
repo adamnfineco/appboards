@@ -518,6 +518,16 @@ Write your variant HTML to the returned `filepath`. The agent detects the file, 
 
 The label is optional but helpful — it becomes "A — Dark palette" in the sidebar for everyone on the call.
 
+### Naming the project (optional)
+
+The board defaults to showing the session key as its name. You can set a friendlier name:
+
+```bash
+curl -s -X PATCH http://localhost:{local_port}/name \
+  -H "Content-Type: application/json" \
+  -d '{"name": "Checkout flow exploration"}'
+```
+
 ### Deleting a variant you own
 
 ```bash
